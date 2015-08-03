@@ -5,3 +5,10 @@ firmware/firmware.bin
 firmware/firmware.elf
 firmware/version.h
 test/dump.png
+build
+misoc
+makestuff
+migen
+misoc
+*.pyc
+
