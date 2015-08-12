@@ -3,10 +3,6 @@
 
 TODO: Complete this, clean this up, move some of it back into the script
 
-These scripts are designed to bootstrap an environment on Ubuntu 14.04 LTS.
-
-To get started (will install packages, etc):
-
   * Run the bootstrap script to get everything required for flashing firmware:
   ```curl -fsS https://raw.githubusercontent.com/timvideos/HDMI2USB-misoc-firmware/scripts/scripts/bootstrap.sh | bash```
   
