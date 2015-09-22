@@ -20,6 +20,13 @@ fi
 
 # Xilinx ISE
 
+# make sure XILINX_PASSPHRASE is set
+if [[ ! -v XILINX_PASSPHRASE ]]; then
+        echo "XILINX_PASSPHRASE is not set."
+        exit
+fi
+
+
 # --------
 # Save the passphrase to a file so we don't echo it in the logs
 XILINX_PASSPHRASE_FILE=$(tempfile)
