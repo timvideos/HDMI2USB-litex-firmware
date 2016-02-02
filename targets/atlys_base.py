@@ -137,7 +137,7 @@ class BaseSoC(SDRAMSoC):
                  firmware_ram_size=0x10000,
                  firmware_filename=None,
                  **kwargs):
-        clk_freq = 75*1000000
+        clk_freq = 50*1000000
         SDRAMSoC.__init__(self, platform, clk_freq,
                           integrated_rom_size=0x8000,
                           sdram_controller_settings=LASMIconSettings(l2_size=32, with_bandwidth=True),
@@ -207,4 +207,4 @@ TIMESPEC "TSise_sucks4" = FROM "GRPsys_clk" TO "GRPeth_rx_clk" TIG;
      eth_clocks_tx=platform.lookup_request("eth_clocks").tx)
 
 
-default_subtarget = MiniSoC
+default_subtarget = BaseSoC
