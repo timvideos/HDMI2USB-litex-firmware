@@ -27,6 +27,7 @@ echo "             This script is: $SETUP_SRC"
 echo "         Firmware directory: $TOP_DIR"
 echo "         Build directory is: $BUILD_DIR"
 echo "     3rd party directory is: $THIRD_DIR"
+echo "     Targeting architecture: $ARCH"
 
 # Check the build dir
 if [ ! -d $BUILD_DIR ]; then
@@ -140,15 +141,15 @@ export PATH=$CONDA_DIR/bin:$PATH
 
 # binutils for the target
 (
-	conda install binutils-lm32-elf=$BINUTILS_VERSION
+	conda install binutils-$ARCH-elf=$BINUTILS_VERSION
 )
-check_version lm32-elf-ld $BINUTILS_VERSION
+check_version $ARCH-elf-ld $BINUTILS_VERSION
 
 # gcc+binutils for the target
 (
-	conda install gcc-lm32-elf=$GCC_VERSION
+	conda install gcc-$ARCH-elf=$GCC_VERSION
 )
-check_version lm32-elf-gcc $GCC_VERSION
+check_version $ARCH-elf-gcc $GCC_VERSION
 
 # sdcc for compiling Cypress FX2 firmware
 (
