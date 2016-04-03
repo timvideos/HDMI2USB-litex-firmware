@@ -8,6 +8,7 @@
 #include <generated/sdram_phy.h>
 #include <time.h>
 
+#include "asm.h"
 #include "config.h"
 #include "fx2.h"
 #include "hdmi_in0.h"
@@ -132,7 +133,7 @@ static void help(void)
 
 static void reboot(void)
 {
-	asm("call r0");
+	REBOOT;
 }
 
 static void status_enable(void)
