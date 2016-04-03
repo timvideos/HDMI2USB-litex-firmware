@@ -1,0 +1,77 @@
+# The softcpu is the core which is embedded inside the FPGA gateware. It acts
+# as a "master controller" for the firmware and responds to commands from the
+# user via the UART interface. This means most of our high level logic can be
+# written in C!
+#
+# The softcpu firmware is embedded into the gateware file. An updated firmware can
+# be temporarily loaded via the UART without needing to rebuild the gateware
+# making development fast!
+#
+# The softcpu can either be an lm32 or an or1k core.
+
+TARGETS += softcpu
+
+RAM_ADDR ?= 0x20000000
+
+ifeq ($(BOARD),atlys)
+SERIAL ?= /dev/ttyVIZ0
+else
+ifeq ($(BOARD),minispartan6)
+SERIAL ?= /dev/ttyUSB1
+RAM_ADDR = 0x40000000
+else
+ifeq ($(BOARD),pipistrello)
+SERIAL ?= /dev/ttyUSB1
+else
+# Opsis fall through
+SERIAL ?= /dev/ttyACM0
+endif
+endif
+endif
+
+help-softcpu:
+	@echo "  Set softcpu serial port with SERIAL=/dev/ttyXXXX"
+	@echo "  (current: $(SERIAL))"
+	@echo " make load-softcpu"
+	@echo " make connect-softcpu"
+
+# The gateware embeds the softcpu firmware, so we need to build that first.
+gateware-generate-softcpu: firmware-softcpu
+	@true
+
+gateware-build-softcpu:
+	@true
+
+ifeq ($(TARGET),hdmi2usb)
+EXTRA_DEPS = embed-fx2
+else
+EXTRA_DEPS =
+endif
+
+firmware-softcpu: third_party/misoc/.git $(EXTRA_DEPS)
+	$(MAKEPY_CMD) build-headers
+	$(MAKE) -C firmware/softcpu all
+
+load-softcpu: firmware-softcpu
+	@echo "To load new firmware, reboot the running firmware and then"
+	@echo "select serialboot at the BIOS prompt."
+	$(FLTERM) --port $(SERIAL) --kernel=$(HDMI2USBDIR)/firmware/softcpu/firmware.bin --kernel-adr=$(RAM_ADDR) --speed 115200
+
+image-softcpu: firmware-softcpu
+	$(MAKEIMAGE_CMD) --fbi --output $(HDMI2USBDIR)/firmware/softcpu/firmware.fbi $(HDMI2USBDIR)/firmware/softcpu/firmware.bin
+
+flash-softcpu: image-softcpu
+	export FIRMWARE_ADDRESS=$$($(PYTHON) -c "import platforms.$(BOARD) as b; print(b.Platform.gateware_size)"); \
+	echo "Flashing to $$($(PYTHON) -c "print(hex($$FIRMWARE_ADDRESS))") ($$FIRMWARE_ADDRESS)"; \
+	$(FLASHEXTRA_CMD) $(HDMI2USBDIR)/firmware/softcpu/firmware.fbi $$FIRMWARE_ADDRESS
+
+
+clean-softcpu:
+	if [ -f $(MSCDIR)/software/include/generated/cpu.mak ]; then \
+		$(MAKE) -C firmware/softcpu clean; \
+	fi
+
+connect-softcpu:
+	$(FLTERM) --port $(SERIAL) --speed 115200
+
+.PHONY: help-softcpu gateware-softcpu firmware-softcpu load-softcpu clean-softcpu connect-softcpu
