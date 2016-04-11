@@ -32,7 +32,11 @@ static void print_csr_hex(unsigned int addr, size_t size) {
 }
 
 void print_board_dna(void) {
+#ifdef CSR_DNA_ID_ADDR
 	print_csr_hex(CSR_DNA_ID_ADDR, CSR_DNA_ID_SIZE);
+#else
+        printf("NO DNA");
+#endif
 }
 
 void print_version(void) {
