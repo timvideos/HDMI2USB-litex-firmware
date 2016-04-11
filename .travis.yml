@@ -35,11 +35,21 @@ env:
    # OpenRISC based soft CPU
    - ARCH=or1k BOARD=atlys TARGET=base
    - ARCH=or1k BOARD=atlys TARGET=video
+   - ARCH=or1k BOARD=atlys TARGET=hdmi2usb
+   - ARCH=or1k BOARD=atlys TARGET=hdmi2eth
    - ARCH=or1k BOARD=opsis TARGET=base
    - ARCH=or1k BOARD=opsis TARGET=video
+   - ARCH=or1k BOARD=opsis TARGET=hdmi2usb
    - ARCH=or1k BOARD=pipistrello TARGET=base
    - ARCH=or1k BOARD=minispartan6 TARGET=base
    - ARCH=or1k BOARD=minispartan6 TARGET=video
+
+matrix:
+  allow_failures:
+   # Allow the or1k version of the complicated targets to fail for now.
+   - env: ARCH=or1k BOARD=atlys TARGET=hdmi2usb
+   - env: ARCH=or1k BOARD=atlys TARGET=hdmi2eth
+   - env: ARCH=or1k BOARD=opsis TARGET=hdmi2usb
 
 install:
  - $PWD/.travis/setup.sh
