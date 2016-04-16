@@ -57,6 +57,15 @@ void print_version(void) {
 	printf("      revision: ");
 	print_csr_hex(CSR_GIT_INFO_COMMIT_ADDR, CSR_GIT_INFO_COMMIT_SIZE);
 	printf("\r\n");
+	printf("       softcpu: ");
+#ifdef __lm32__
+	printf("lm32");
+#elif __or1k__
+	printf("or1k");
+#else
+	printf("Unknown");
+#endif
+	printf("\r\n");
 	printf("misoc revision: %08x\r\n", identifier_revision_read());
 	printf("\r\n");
 	printf("firmware version info\r\n");
