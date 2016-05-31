@@ -32,7 +32,11 @@ static void print_csr_hex(unsigned int addr, size_t size) {
 }
 
 void print_board_dna(void) {
+#ifdef CSR_DNA_ID_ADDR
 	print_csr_hex(CSR_DNA_ID_ADDR, CSR_DNA_ID_SIZE);
+#else
+        printf("NO DNA");
+#endif
 }
 
 void print_version(void) {
@@ -52,6 +56,15 @@ void print_version(void) {
 	printf("\r\n");
 	printf("      revision: ");
 	print_csr_hex(CSR_GIT_INFO_COMMIT_ADDR, CSR_GIT_INFO_COMMIT_SIZE);
+	printf("\r\n");
+	printf("       softcpu: ");
+#ifdef __lm32__
+	printf("lm32");
+#elif __or1k__
+	printf("or1k");
+#else
+	printf("Unknown");
+#endif
 	printf("\r\n");
 	printf("misoc revision: %08x\r\n", identifier_revision_read());
 	printf("\r\n");

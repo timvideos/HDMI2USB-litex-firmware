@@ -36,6 +36,7 @@ echo "             This script is: $SETUP_SRC"
 echo "         Firmware directory: $TOP_DIR"
 echo "         Build directory is: $BUILD_DIR"
 echo "     3rd party directory is: $THIRD_DIR"
+echo "     Targeting architecture: $ARCH"
 
 # Check the build dir
 if [ ! -d $BUILD_DIR ]; then
@@ -97,13 +98,13 @@ export PATH=$CONDA_DIR/bin:$PATH
 
 
 
-check_version lm32-elf-ld $BINUTILS_VERSION || return 1
+check_version $ARCH-elf-ld $BINUTILS_VERSION || return 1
 
 # gcc+binutils for the target
 
 
 
-check_version lm32-elf-gcc $GCC_VERSION || return 1
+check_version $ARCH-elf-gcc $GCC_VERSION || return 1
 
 # sdcc for compiling Cypress FX2 firmware
 
@@ -157,6 +158,9 @@ export HDMI2USB_ENV=1
 ORIG_PS1="$PS1"
 hdmi2usb_prompt() {
 	P=""
+	if [ ! -z "$ARCH" ]; then
+		P="$P A=$ARCH"
+	fi
 	if [ ! -z "$BOARD" ]; then
 		P="$P B=$BOARD"
 	fi

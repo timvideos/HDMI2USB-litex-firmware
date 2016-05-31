@@ -30,7 +30,7 @@ gateware-build-fx2:
 firmware-fx2: firmware/fx2/hdmi2usb.hex
 	@true
 
-embed-fx2: firmware/lm32/fx2_fw_hdmi2usb.c
+embed-fx2: firmware/softcpu/fx2_fw_hdmi2usb.c
 	@true
 
 load-fx2: firmware/fx2/hdmi2usb.hex
@@ -42,8 +42,8 @@ clean-fx2:
 firmware/fx2/hdmi2usb.hex:
 	$(MAKE) -C firmware/fx2
 
-firmware/lm32/fx2_fw_hdmi2usb.c: firmware/fx2/generate_fx2_microboot.py firmware/fx2/hdmi2usb.hex
-	firmware/fx2/generate_fx2_microboot.py firmware/fx2/hdmi2usb.hex > firmware/lm32/fx2_fw_hdmi2usb.c
+firmware/softcpu/fx2_fw_hdmi2usb.c: firmware/fx2/generate_fx2_microboot.py firmware/fx2/hdmi2usb.hex
+	firmware/fx2/generate_fx2_microboot.py firmware/fx2/hdmi2usb.hex > firmware/softcpu/fx2_fw_hdmi2usb.c
 
 # Utility functions
 view:

@@ -39,7 +39,7 @@ source $TOP_DIR/scripts/setup-env.sh
 	make load-fx2; sleep 1
 
 	echo "Connecting to firmware.  Type 'help' for commands..."
-	make connect-lm32
+	make connect-softcpu
 
 	echo "Opening video output..."
 	make view

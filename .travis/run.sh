@@ -98,6 +98,11 @@ for BOARD in $BOARDS; do
 			echo ""
 			echo ""
 			echo "- No branch name, unable to copy built files"
+		elif [ "$ARCH" != "lm32" ]; then
+			echo ""
+			echo ""
+			echo ""
+			echo "- Not uploading OpenRISC version at the moment"
 		else
 			# Look at repo we are running in to determine where to try pushing to if in a fork
 			COPY_REPO_OWNER=$(echo $TRAVIS_REPO_SLUG|awk -F'/' '{print $1}')

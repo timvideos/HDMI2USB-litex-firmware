@@ -1,3 +1,4 @@
+#include "asm.h"
 #include "fx2.h"
 
 #ifdef CSR_FX2_RESET_OUT_ADDR
@@ -116,7 +117,7 @@ void fx2_reboot(enum fx2_fw_version fw)
 	fx2_fw_active = fw;
 	printf("fx2: Turning off.\r\n");
 	fx2_reset_out_write(0);
-	for(i=0;i<FX2_RESET_PERIOD;i++) __asm__("nop");
+	for(i=0;i<FX2_RESET_PERIOD;i++) NOP;
 	fx2_reset_out_write(1);
 	printf("fx2: Turning on.\r\n");
 	fx2_load();

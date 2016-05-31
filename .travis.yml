@@ -21,16 +21,35 @@ addons:
 
 env:
   matrix:
-   - BOARD=atlys TARGET=base
-   - BOARD=atlys TARGET=video
-   - BOARD=atlys TARGET=hdmi2usb
-   - BOARD=atlys TARGET=hdmi2eth
-   - BOARD=opsis TARGET=base
-   - BOARD=opsis TARGET=video
-   - BOARD=opsis TARGET=hdmi2usb
-   - BOARD=pipistrello TARGET=base
-   - BOARD=minispartan6 TARGET=base
-   - BOARD=minispartan6 TARGET=video
+   # lm32 based soft CPU
+   - ARCH=lm32 BOARD=atlys TARGET=base
+   - ARCH=lm32 BOARD=atlys TARGET=video
+   - ARCH=lm32 BOARD=atlys TARGET=hdmi2usb
+   - ARCH=lm32 BOARD=atlys TARGET=hdmi2eth
+   - ARCH=lm32 BOARD=opsis TARGET=base
+   - ARCH=lm32 BOARD=opsis TARGET=video
+   - ARCH=lm32 BOARD=opsis TARGET=hdmi2usb
+   - ARCH=lm32 BOARD=pipistrello TARGET=base
+   - ARCH=lm32 BOARD=minispartan6 TARGET=base
+   - ARCH=lm32 BOARD=minispartan6 TARGET=video
+   # OpenRISC based soft CPU
+   - ARCH=or1k BOARD=atlys TARGET=base
+   - ARCH=or1k BOARD=atlys TARGET=video
+   - ARCH=or1k BOARD=atlys TARGET=hdmi2usb
+   - ARCH=or1k BOARD=atlys TARGET=hdmi2eth
+   - ARCH=or1k BOARD=opsis TARGET=base
+   - ARCH=or1k BOARD=opsis TARGET=video
+   - ARCH=or1k BOARD=opsis TARGET=hdmi2usb
+   - ARCH=or1k BOARD=pipistrello TARGET=base
+   - ARCH=or1k BOARD=minispartan6 TARGET=base
+   - ARCH=or1k BOARD=minispartan6 TARGET=video
+
+matrix:
+  allow_failures:
+   # Allow the or1k version of the complicated targets to fail for now.
+   - env: ARCH=or1k BOARD=atlys TARGET=hdmi2usb
+   - env: ARCH=or1k BOARD=atlys TARGET=hdmi2eth
+   - env: ARCH=or1k BOARD=opsis TARGET=hdmi2usb
 
 install:
  - $PWD/.travis/setup.sh

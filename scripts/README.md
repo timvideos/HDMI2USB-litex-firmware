@@ -80,9 +80,9 @@ This clones the HDMI2USB-misoc-firmware repository, adds the timvideos fpga-supp
   make load-fx2
   ```
 
-6. Connect to lm32 softcore to send direct commands to the HDMI2USB such as changing resolution:
+6. Connect to softcpu core to send direct commands to the HDMI2USB such as changing resolution:
   ```
-  make connect-lm32
+  make connect-softcpu
   ```
   Set a mode/capture - type 'help' and read instructions.
 
