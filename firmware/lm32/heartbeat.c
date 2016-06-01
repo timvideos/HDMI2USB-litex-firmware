@@ -7,41 +7,42 @@
 #include <system.h>
 #include <time.h>
 
-#define HDMI_IN0_FRAMEBUFFERS_BASE 0x00000000
-#define HDMI_IN1_FRAMEBUFFERS_BASE 0x01000000
-#define PATTERN_FRAMEBUFFER_BASE 0x02000000
+#define HDMI_IN0_FRAMEBUFFERS_BASE 	0x01000000
+#define HDMI_IN1_FRAMEBUFFERS_BASE 	0x02000000
+#define PATTERN_FRAMEBUFFER_BASE 	0x03000000
 
 #define YCBCR422_RED    0x544cff4c
 
-void heartbeat(int h_active, int m_active)
+void heartbeat(int h_active, int m_active, )
 {
 	int i;
-	flush_l2_cache();
 	volatile unsigned int *framebuffer = (unsigned int *)(MAIN_RAM_BASE + HDMI_IN0_FRAMEBUFFERS_BASE);
 	// FIX ME : Add correct address here
 
-	int x, y;
-	int mask[h_active][m_active]
+	int addr;
+	int toggle;
+	static int last_event;
 
-	for (y=0; y<m_active; y++){
-		for(x=0; x<h_active; x++){
-			if( (y>(m_active - 4)) && (x>(h_active - 4)) ) 
-				mask[x][y] = 1;
+	// A 4x4 pixel patch in right bottom
+
+
+	addr = (h_active/2)*(m_active-4) + ( h_active/2 -2)
+
+	for (i=0; i<8; i++){
+
+	if(elapsed(&last_event, identifier_frequency_read()/1000)) {
+		if(toggle==0) {
+			framebuffer[addr] = YCBCR422_RED; 
+			toggle = 1;
 		}
+
+		else toggle = 0;
 	}
 
 
-	for (y=0; y<m_active; y++){
-		for (x=0; x<h_active; x++){
+		if( i%2 == 1) addr = addr+(h/2) ;
+		else addr = addr + 1;
 
-			i = y*h_active/2 + x/2;
-			if(mask[x][y]==1){
-				framebuffer[i] = YCBCR422_RED;
-			}
-
-
-		}
 	}
-
 
 }
