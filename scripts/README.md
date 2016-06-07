@@ -140,7 +140,7 @@ While in the HDMI2USB-mode-switch folder, run the file to switch to JTAG mode
    While in the HDMI2USB-mode-switch folder, run the file to switch to JTAG mode
    ```
    ./conda/bin/hdmi2usb-mode-switch --mode=jtag
-
+   ```
  - Connect to console and use fx2 switch command.
 
 ---
