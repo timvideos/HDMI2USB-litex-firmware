@@ -4,6 +4,8 @@
 #include <hw/flags.h>
 #include <system.h>
 #include <time.h>
+#include "heartbeat.h"
+
 
 void heartbeat(int h_active, int m_active )
 {
