@@ -1,7 +1,6 @@
 # Building HDMI2USB-misoc-firmware
 
-These scripts are designed to bootstrap a firmware build environment on Ubuntu
-14.04 LTS and also works on 15.04 though with less testing.
+These scripts are designed to bootstrap a firmware build environment on Ubuntu 14.04 LTS and also works on 15.04 though with less testing.
 
 ## Prerequisite
 
@@ -28,273 +27,94 @@ Install Xilinx ISE WebPACK 14.7 + activate a licence:
  
 ## Bootstrap
  
-Run the bootstrap script to build an environment required for flashing
-firmware:
-```
-curl -fsS https://raw.githubusercontent.com/timvideos/HDMI2USB-misoc-firmware/master/scripts/bootstrap.sh | bash
-```
+Run the bootstrap script to build an environment required for flashing firmware:
+  ```
+  curl -fsS https://raw.githubusercontent.com/timvideos/HDMI2USB-misoc-firmware/master/scripts/bootstrap.sh | bash
+  ```
 
-This clones the HDMI2USB-misoc-firmware repository, adds the timvideos
-fpga-support PPA, installs packages required then downloads misoc and its
-dependencies. Depending on your connection speed this could take a while to
-download.
+This clones the HDMI2USB-misoc-firmware repository, adds the timvideos fpga-support PPA, installs packages required then downloads misoc and its dependencies. Depending on your connection speed this could take a while to download.
 
-## Working with the firmware
+## Building the firmware
 
-### 1) Enter the environment
+1. Initalise the environment (required for any of the build/load steps below[2]):
+  ```
+  cd HDMI2USB-misoc-firmware
+  source scripts/setup-env.sh
+  ```
 
-Before being able to run any of the build steps you must first `enter` the
-development environment.
+2.  Build the gateware:
+  ```
+  make gateware
+  ```
 
-Before entering, you should set the type of board you want to use.  This is
-done by doing;
-```
-export BOARD=opsis
-```
+  This may fail at the end after it builds the gateware (as it will try to flash the gateware), this is OK, as long as the gateware files have been built:
 
-To do this do the following steps;
-```
-cd HDMI2USB-misoc-firmware
-source scripts/enter-env.sh
-```
+  ```
+  Saving bit stream in "atlys_hdmi2usb-hdmi2usbsoc-atlys.bit".
+  Saving bit stream in "atlys_hdmi2usb-hdmi2usbsoc-atlys.bin".
+  ```
 
-Once you source the environment your prompt should change to look something
-like;
-```
-(H2U BOARD=opsis) #
-```
+   The built gateware will be in build/misoc/build/.
 
-FIXME: Add a `make test-env` which verifies the environment is working
-(excpecially that the Xilinx stuff has a proper license stuff).
+3. You've now built the HDMI2USB firmware/gateware.  Ensure board has the right pins set before flashing anything, and plug it in:
 
-### 2) Build the gateware
+  As the HDMI2USB firmware manipulates the EDID information the following jumpers must be removed;
 
-Once you have entered the environment, you can build things.
+  ```
+  JP2/SDA (which connects the EDID lines from J1/HDMI IN to JA/HDMI OUT).
+  JP6 and JP7 (which connects the EDID lines from J3/HDMI IN to J2/HDMI OUT).
+  ```
 
-Building the full HDMI2USB gateware takes roughly between 15 minutes and 30
-minutes on a modern fast machine.
+  * Plug board in using USB PROG port & switch on.  If using a VM, ensure the device is passed through.
+  * Other USB port is for the HDMI2USB capture.  Recommend plugging this in too so you can use/test the device.
+ 
+4.  Flash the gateware and firmware - see [1] if using a VM:
 
-```
-make gateware
-```
+  ```
+  make load-gateware
+  ```
+  (may need to run several times)
 
-At the end of running the build command, you should end up with;
-```
-Creating bit map...
-Saving bit stream in "opsis_hdmi2usb-hdmi2usbsoc-opsis.bit".
-Saving bit stream in "opsis_hdmi2usb-hdmi2usbsoc-opsis.bin".
-Bitstream generation is complete.
-Firmware 56008 bytes (9528 bytes left)
-```
+5.  Load fx2 firmware to enable USB capture:
+  ```
+  make load-fx2
+  ```
 
-The built gateware will be in build/misoc/build/.
+6. Connect to lm32 softcore to send direct commands to the HDMI2USB such as changing resolution:
+  ```
+  make connect-lm32
+  ```
+  Set a mode/capture - type 'help' and read instructions.
 
-### 3) Configure your board
+  You likely need to enable a video mode, framebuffer & encoder.
 
-Before loading onto your board, you need to ensure that your board is in the
-correct state.
+  'status' helps to see what the firmware is doing.
 
----
+  The following commands are an example of what is needed;
+  ```
+  encoder on
+  encoder quality 85
+  video_matrix connect input1 output0
+  video_matrix connect input1 output1
+  video_matrix connect input1 encoder
+  ```
 
-#### Configuring the Opsis
+7. View the video output on your computer with your preferred tool.
 
-To use the Opsis, you need to set the jumpers correctly, connect cables
-correctly and then put the board into JTAG mode.
-
-FIXME: Put something here about the Opsis.
-
-##### Jumpers Configuration
-
-The jumpers as set on the Opsis when it ships work.
-
-FIXME: Put picture showing correct jumper configuration.
-
-##### Cables
-
-The programming computer must be connected to the USB-B port.
-
-##### JTAG mode
-
-By default the Opsis will boot into HDMI2USB mode. To load gateware onto the
-board it must be switched into JTAG mode.
-
-To switch in the JTAG mode, clone/download the HDMI2USB-mode-switch repo, and run make all to install the required dependencies. Once this finishes hdmi2usb-mode-switch file will be generated in /HDMI2USB-mode-switch/conda/bin/
-
-While in the HDMI2USB-mode-switch folder, run the file to switch to JTAG mode
-```
-./conda/bin/hdmi2usb-mode-switch --mode=jtag
-
-```
-
-
- - [HDMI2USB-mode-switch](https://github.com/timvideos/HDMI2USB-mode-switch)
-   then run:
-
-   To switch in the JTAG mode, clone/download the HDMI2USB-mode-switch repo, and run make all to install the required dependencies.
-
-   ```
-   make all
-   ```
-   Once this finishes hdmi2usb-mode-switch file will be generated in /HDMI2USB-mode-switch/conda/bin/
-
-   While in the HDMI2USB-mode-switch folder, run the file to switch to JTAG mode
-   ```
-   ./conda/bin/hdmi2usb-mode-switch --mode=jtag
-   ```
- - Connect to console and use fx2 switch command.
+  The scripts/view-hdmi2usb.sh script will try and find a suitable tool to display.
+  ```
+  make view
+  # or
+  scripts/view-hdmi2usb.sh
+  ```
 
 ---
 
-#### Configuring the Atlys
 
-Before loading the gateware you need to set the jumpers correctly and connect
-the cables correctly.
-
-FIXME: Put something here about the Atlys.
-
-##### Jumpers Configuration
-
-As the HDMI2USB firmware manipulates the EDID information the following jumpers
-must be removed;
-
-```
-JP2/SDA (which connects the EDID lines from J1/HDMI IN to JA/HDMI OUT).
-JP6 and JP7 (which connects the EDID lines from J3/HDMI IN to J2/HDMI OUT).
-```
-
-##### Cables
-
-  * Plug board in using `PROG` port & switch on. If using a VM, ensure the
-    device is passed through.
-
-  * The other UART port is for the controlling the firmware. Recommend plugging
-   :w
-his in too so you can use/test the device.
-
----
-
-### 4) Loading temporarily
-
-You can load gateware and firmware onto your device temporarily for testing. If
-you power cycle the device after this step it will go back to the state before
-this step.
-
-Load the gateware and firmware - see [1] if using a VM:
-```
-make load-gateware
-```
-
-On the Opsis, while loading the Blue LED (D1 / Done) and Green LED (D2) will
-light up. After it has finished, both LED will turn off.
-
-The output will look like this;
-```
-jtagspi_program
-Info : usb blaster interface using libftdi
-Info : This adapter doesn't support configurable speed
-Info : JTAG tap: xc6s.tap tap/device found: 0x44028093 (mfg: 0x049 (Xilinx), part: 0x4028, ver: 0x4)
-loaded file build/opsis_hdmi2usb-hdmi2usbsoc-opsis.bit to pld device 0 in 31s 983152us
-```
-
-Load fx2 firmware to enable USB capture:
-```
-make load-fx2
-```
-
-#### Common Errors
-
-##### unable to open ftdi device
-
-###### `device not found`
-
-This error means that a HDMI2USB board in JTAG mode was not detected. Power cycle the board and make sure
-you have followed the `3) Configure your board` section.
-
-```
-Warn : Adapter driver 'usb_blaster' did not declare which transports it allows; assuming legacy JTAG-only
-Info : only one transport option; autoselect 'jtag'
-Warn : incomplete ublast_vid_pid configuration
-jtagspi_program
-Info : usb blaster interface using libftdi
-Error: unable to open ftdi device: device not found
-```
-
-###### `inappropriate permissions on device`
-
-This error means that your user doesn't have permission to talk to the HDMI2USB
-board. This is normally caused by not installing the udev rules which come
-with HDMI2USB-mode-switch.
-
-```
-Warn : Adapter driver 'usb_blaster' did not declare which transports it allows; assuming legacy JTAG-only
-Info : only one transport option; autoselect 'jtag'
-Warn : incomplete ublast_vid_pid configuration
-jtagspi_program
-Info : usb blaster interface using libftdi
-Error: unable to open ftdi device: inappropriate permissions on device!
-```
-
-##### Warn: Bypassing JTAG setup events due to errors
-
-If you get an error like this;
-```
-Info : This adapter doesn't support configurable speed
-Info : JTAG tap: xc6s.tap tap/device found: 0x03030303 (mfg: 0x181 (Solectron), part: 0x3030, ver: 0x0)
-Warn : JTAG tap: xc6s.tap       UNEXPECTED: 0x03030303 (mfg: 0x181 (Solectron), part: 0x3030, ver: 0x0)
-Error: JTAG tap: xc6s.tap expected 1 of 13: 0x04000093 (mfg: 0x049 (Xilinx), part: 0x4000, ver: 0x0)
-Error: JTAG tap: xc6s.tap expected 2 of 13: 0x04001093 (mfg: 0x049 (Xilinx), part: 0x4001, ver: 0x0)
-Error: JTAG tap: xc6s.tap expected 3 of 13: 0x04002093 (mfg: 0x049 (Xilinx), part: 0x4002, ver: 0x0)
-Error: JTAG tap: xc6s.tap expected 4 of 13: 0x04004093 (mfg: 0x049 (Xilinx), part: 0x4004, ver: 0x0)
-Error: JTAG tap: xc6s.tap expected 5 of 13: 0x04024093 (mfg: 0x049 (Xilinx), part: 0x4024, ver: 0x0)
-```
-
-It means the JTAG firmware on the FX2 has gotten confused. Use mode-switch tool
-to switch to serial mode and then back to the jtag mode like this;
-```
-hdmi2usb-mode-switch --mode=serial
-hdmi2usb-mode-switch --mode=jtag
-```
-
-### 5) Testing
-
-Connect to lm32 softcore to send direct commands to the HDMI2USB such as
-changing resolution:
-```
-make connect-lm32
-```
-Set a mode/capture - type 'help' and read instructions.
-
-You likely need to enable a video mode, frame buffer & encoder.
-
-'status' helps to see what the firmware is doing.
-
-The following commands are an example of what is needed;
-```
-encoder on
-encoder quality 85
-video_matrix connect input1 output0
-video_matrix connect input1 output1
-video_matrix connect input1 encoder
-```
-
-View the video output on your computer with your preferred tool.
-
-The scripts/view-hdmi2usb.sh script will try and find a suitable tool to display.
-```
-make view
-# or
-scripts/view-hdmi2usb.sh
-```
-
-### 6) Loading permanently
-
-If you are happy with the firmware you can load it onto the board so that if
-persists after power cycle.
-
-
-```
-make flash
-```
+Once everything has been built, get HDMI2USB running again after a power cycle by running this script, possibly multiple times if errors first attempt (does non-build steps above):
+   ```
+   ~/HDMI2USB-misoc-firmware/scripts/flash-hdmi2usb.sh
+   ```
 
 #### Footnotes
 
@@ -308,9 +128,8 @@ make flash
 
   * bootstrap.sh: script to run on a fresh Ubuntu 14.04 LTS install
   * get-env.sh: called from bootstrap (gets and installs software)
-  * enter-env.sh: script to run after installation to enter environment
+  * setup-env.sh: script to run after installation to setup environemnt
 
+  * 52-hdmi2usb.rules: udev rules loaded by get-env.sh
   * view-hdmi2usb.sh: test script to view HDMI2USB output
-
-
-
+  * flash-hdmi2usb.sh: script to run after gateware/firmware built
