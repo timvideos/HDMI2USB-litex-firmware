@@ -169,6 +169,10 @@ class RAWImage:
         self.cb = None
         self.cr = None
 
+        self.r_f = None
+        self.g_f = None
+        self.b_f = None
+
         self.data = []
 
         self.coefs = coefs
@@ -176,7 +180,7 @@ class RAWImage:
         self.length = None
 
         if filename is not None:
-            self.open(filename)
+            self.open(filename) 
 
 
     def open(self, filename):
@@ -206,10 +210,14 @@ class RAWImage:
         self.cr = cr
         self.length = len(y)
 
+    def set_rgb16f(self, r_f, g_f, b_f):
+        self.r_f = r_f
+        self.g_f = g_f
+        self.b_f = b_f
+        self.length = len(r_f)
 
     def set_data(self, data):
         self.data = data
-
 
     def pack_rgb(self):
         self.data = []
@@ -220,7 +228,6 @@ class RAWImage:
             self.data.append(data)
         return self.data
 
-
     def pack_ycbcr(self):
         self.data = []
         for i in range(self.length):
@@ -230,6 +237,14 @@ class RAWImage:
             self.data.append(data)
         return self.data
 
+    def pack_rgb16f(self):
+        self.data = []
+        for i in range(self.length):
+            data  = (self.r_f[i] & 0xff) << 32
+            data |= (self.g_f[i] & 0xff) << 16
+            data |= (self.b_f[i] & 0xff) << 0
+            self.data.append(data)
+        return self.data
 
     def unpack_rgb(self):
         self.r = []
@@ -252,6 +267,16 @@ class RAWImage:
             self.cr.append((data >> 0) & 0xff)
         return self.y, self.cb, self.cr
 
+
+    def unpack_rgb16f(self):
+        self.r_f = []
+        self.g_f = []
+        self.b_f = []
+        for data in self.data:
+            self.r_f.append((data >> 32) & 0xff)
+            self.g_f.append((data >> 16) & 0xff)
+            self.b_f.append((data >> 0 ) & 0xff)
+        return self.r_f, self.g_f, self.b_f
 
     # Model for our implementation
     def rgb2ycbcr_model(self):
@@ -299,6 +324,17 @@ class RAWImage:
             self.r.append(int(y + (cr - 128) *  1.402))
             self.g.append(int(y + (cb - 128) * -0.34414 + (cr - 128) * -0.71414))
             self.b.append(int(y + (cb - 128) *  1.772))
+        return self.r, self.g, self.b        
+
+    # Convert 16 bit float to 8 bit pixel
+    def ycbcr2rgb_model(self):
+        self.r = []
+        self.g = []
+        self.b = []
+        for y, cb, cr in zip(self.y, self.cb, self.cr):
+            self.r.append(int(y - self.coefs["yoffset"] + (cr - self.coefs["coffset"])*self.coefs["acoef"]))
+            self.g.append(int(y - self.coefs["yoffset"] + (cb - self.coefs["coffset"])*self.coefs["bcoef"] + (cr - self.coefs["coffset"])*self.coefs["ccoef"]))
+            self.b.append(int(y - self.coefs["yoffset"] + (cb - self.coefs["coffset"])*self.coefs["dcoef"]))
         return self.r, self.g, self.b
 
 
