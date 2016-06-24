@@ -15,7 +15,7 @@ class RGB16f2RGBDatapath(Module):
         self.source = source = Record(rgb_layout(rgb_w))
 
         # # #
-        [offset, exp_len , frac_len ] = float16_coef()
+        [offset, exp_len , frac_len ] = rgb16f_coefs()
 
         # delay rgb16f signals
         rgb16f_delayed = [sink]
@@ -48,13 +48,13 @@ class RGB16f2RGBDatapath(Module):
 		
         self.sync += [
         
-            r_exp_offset.eq(offset - sink.r[10:15] -1),    
-            g_exp_offset.eq(offset - sink.g[10:15] -1),    
-            b_exp_offset.eq(offset - sink.b[10:15] -1),
+            r_exp_offset.eq(offset - sink.r_f[10:15] -1),    
+            g_exp_offset.eq(offset - sink.g_f[10:15] -1),    
+            b_exp_offset.eq(offset - sink.b_f[10:15] -1),
 
-            r_frac[:frac_len].eq(sink.r[:10]),
-            g_frac[:frac_len].eq(sink.g[:10]),
-            b_frac[:frac_len].eq(sink.b[:10]),
+            r_frac[:frac_len].eq(sink.r_f[:10]),
+            g_frac[:frac_len].eq(sink.g_f[:10]),
+            b_frac[:frac_len].eq(sink.b_f[:10]),
 
             r_frac[frac_len].eq(1),
             g_frac[frac_len].eq(1),
@@ -75,16 +75,16 @@ class RGB16f2RGBDatapath(Module):
 
 class RGB16f2RGB(PipelinedActor, Module):
     def __init__(self, rgb16f_w=16, rgb_w=8, coef_w=8):
-        self.sink = sink = Sink(EndpointDescription(ycbcr444_layout(ycbcr_w), packetized=True))
+        self.sink = sink = Sink(EndpointDescription(rgb16f_layout(rgb16f_w), packetized=True))
         self.source = source = Source(EndpointDescription(rgb_layout(rgb_w), packetized=True))
         PipelinedActor.__init__(self, datapath_latency)
         self.latency = datapath_latency
 
         # # #
 
-        self.submodules.datapath = YCbCr2RGBDatapath(ycbcr_w, rgb_w, coef_w)
+        self.submodules.datapath = RGB16f2RGBDatapath(rgb16f_w, rgb_w)
         self.comb += self.datapath.ce.eq(self.pipe_ce)
-        for name in ["r_16", "g_16", "b_16"]:
+        for name in ["r_f", "g_f", "b_f"]:
             self.comb += getattr(self.datapath.sink, name).eq(getattr(sink, name))
         for name in ["r", "g", "b"]:
             self.comb += getattr(source, name).eq(getattr(self.datapath.source, name))

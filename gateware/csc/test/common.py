@@ -327,14 +327,52 @@ class RAWImage:
         return self.r, self.g, self.b        
 
     # Convert 16 bit float to 8 bit pixel
-    def ycbcr2rgb_model(self):
+    def rgb16f2rgb_model(self):
         self.r = []
         self.g = []
         self.b = []
-        for y, cb, cr in zip(self.y, self.cb, self.cr):
-            self.r.append(int(y - self.coefs["yoffset"] + (cr - self.coefs["coffset"])*self.coefs["acoef"]))
-            self.g.append(int(y - self.coefs["yoffset"] + (cb - self.coefs["coffset"])*self.coefs["bcoef"] + (cr - self.coefs["coffset"])*self.coefs["ccoef"]))
-            self.b.append(int(y - self.coefs["yoffset"] + (cb - self.coefs["coffset"])*self.coefs["dcoef"]))
+        for r_f, g_f, b_f in zip(self.r_f, self.g_f, self.b_f):
+            self.r.append(float2int(r_f))
+            self.g.append(float2int(g_f))
+            self.b.append(float2int(b_f))
         return self.r, self.g, self.b
 
+    # Convert 8 bit pixel to 16 bit float
+    def rgb2rgb16f_model(self):
+        self.r_f = []
+        self.g_f = []
+        self.b_f = []
+        for r, g, b in zip(self.r, self.g, self.b):
+            self.r_f.append(int2float(r))
+            self.g_f.append(int2float(g))
+            self.b_f.append(int2float(b))
+        return self.r_f, self.g_f, self.b_f
 
+def int2float(x):
+
+    if x==0:
+        return 0
+    else:
+        y = bin(x)[2:].zfill(8)
+        for i in range(len(y)):
+            if y[i] == '1':
+                shift_val = i
+                break
+
+        sign = '0'
+        exp = 15 - 1 - shift_val
+        frac = y[shift_val+1:][::-1].zfill(10)[::-1]
+        x = sign+bin(exp)[2:].zfill(5)+frac
+        z = int(x, 2)
+        return z
+
+def float2int(x):
+
+    if x==0:
+        return 0
+    else:
+        y = bin(x)[2:].zfill(16)
+
+        exp = y[1:6]
+        frac = '1'+y[6:16]
+        return int(frac,2) >> (17-int(exp,2))

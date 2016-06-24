@@ -29,23 +29,23 @@ class TB(Module):
 
     def gen_simulation(self, selfp):
         # convert image using rgb2ycbcr model
-        raw_image = RAWImage(rgb2ycbcr_coefs(8), "lena.png", 64)
-        raw_image.rgb2ycbcr_model()
-        raw_image.ycbcr2rgb()
-        raw_image.save("lena_rgb2ycbcr_reference.png")
+#        raw_image = RAWImage(rgb2ycbcr_coefs(8), "lena.png", 64)
+#        raw_image.rgb2ycbcr_model()
+#        raw_image.ycbcr2rgb()
+#        raw_image.save("lena_rgb2ycbcr_reference.png")
 
         for i in range(24):
             yield
 
         # convert image using rgb2ycbcr implementation
-        raw_image = RAWImage(rgb2ycbcr_coefs(8), "lena.png", 64)
+        raw_image = RAWImage(None, "lena.png", 64)
         raw_image.pack_rgb()
         packet = Packet(raw_image.data)
         self.streamer.send(packet)
         yield from self.logger.receive()
         raw_image.set_data(self.logger.packet)
         raw_image.unpack_rgb16f()
-        raw_image.rgb16f2rgb()
+        raw_image.rgb16f2rgb_model()
         raw_image.save("lena_rgb2rgb16f.png")
 
 if __name__ == "__main__":

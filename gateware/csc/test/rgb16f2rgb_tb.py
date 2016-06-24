@@ -3,7 +3,7 @@ from migen.sim.generic import run_simulation
 from migen.flow.actor import EndpointDescription
 
 from gateware.csc.common import *
-from gateware.csc.rgb16f2rgb import rgb16f2rgb_coefs, RGB16f2RGB
+from gateware.csc.rgb16f2rgb import RGB16f2RGB
 
 from gateware.csc.test.common import *
 
@@ -15,9 +15,9 @@ class TB(Module):
 
         self.comb += [
             Record.connect(self.streamer.source, self.rgb16f2rgb.sink, leave_out=["data"]),
-            self.rgb16f2rgb.sink.payload.y.eq(self.streamer.source.data[32:48]),
-            self.rgb16f2rgb.sink.payload.cb.eq(self.streamer.source.data[16:32]),
-            self.rgb16f2rgb.sink.payload.cr.eq(self.streamer.source.data[0:16]),
+            self.rgb16f2rgb.sink.payload.r_f.eq(self.streamer.source.data[32:48]),
+            self.rgb16f2rgb.sink.payload.g_f.eq(self.streamer.source.data[16:32]),
+            self.rgb16f2rgb.sink.payload.b_f.eq(self.streamer.source.data[0:16]),
 
             Record.connect(self.rgb16f2rgb.source, self.logger.sink, leave_out=["r", "g", "b"]),
             self.logger.sink.data[16:24].eq(self.rgb16f2rgb.source.r),
@@ -26,18 +26,18 @@ class TB(Module):
         ]
 
     def gen_simulation(self, selfp):
-        # convert image using rgb16f2rgb model
-        raw_image = RAWImage(ycbcr2rgb_coefs(8), "lena.png", 64)
-        raw_image.rgb2ycbcr()
-        raw_image.ycbcr2rgb_model()
-        raw_image.save("lena_ycbcr2rgb_reference.png")
+#         convert image using rgb16f2rgb model
+        raw_image = RAWImage(None, "lena.png", 64)
+        raw_image.rgb2rgb16f_model()
+        raw_image.rgb16f2rgb_model()
+        raw_image.save("lena_rgb16f_reference.png")
 
-        for i in range(16):
+        for i in range(24):
             yield
 
         # convert image using rgb16f2rgb implementation
-        raw_image = RAWImage(ycbcr2rgb_coefs(8), "lena.png", 64)
-        raw_image.rgb2rgb16f()
+        raw_image = RAWImage(None, "lena.png", 64)
+        raw_image.rgb2rgb16f_model()
         raw_image.pack_rgb16f()
         packet = Packet(raw_image.data)
         self.streamer.send(packet)

@@ -11,12 +11,12 @@ datapath_latency = 2
 
 @DecorateModule(InsertCE)
 class RGB2RGB16fDatapath(Module):
-    def __init__(self, rgb_w, rgb_16f_w):
+    def __init__(self, rgb_w, rgb16f_w):
         self.sink = sink = Record(rgb_layout(rgb_w))
-        self.source = source = Record(rgb_16f_layout(rgb16f_w))
+        self.source = source = Record(rgb16f_layout(rgb16f_w))
 
         # # #
-        [offset, exp_len , frac_len ] = float16_coef()
+        [offset, exp_len , frac_len ] = rgb16f_coefs()
 
         # delay rgb signals
         rgb_delayed = [sink]
@@ -43,97 +43,93 @@ class RGB2RGB16fDatapath(Module):
         g_exp = Signal(5)
         b_exp = Signal(5)
 
+        # Leading one detector
+        If( sink.r[7]==1,
+            r_lshift_val.eq(0)
+        ).Elif(sink.r[6] == 1,
+            r_lshift_val.eq(1)
+        ).Elif(sink.r[5] == 1,
+            r_lshift_val.eq(2)
+        ).Elif(sink.r[4] == 1,
+            r_lshift_val.eq(3)
+        ).Elif(sink.r[3] == 1,
+            r_lshift_val.eq(4)
+        ).Elif(sink.r[2] == 1,
+            r_lshift_val.eq(5)
+        ).Elif(sink.r[1] == 1,
+            r_lshift_val.eq(6)
+        ).Elif(sink.r[0] == 1,
+            r_lshift_val.eq(7)
+        ).Else(r_exp.eq(14)),
+
+
+        If(sink.g[7] == 1,
+            g_lshift_val.eq(0)
+        ).Elif(sink.g[6] == 1,
+            g_lshift_val.eq(1)
+        ).Elif(sink.g[5] == 1,
+            g_lshift_val.eq(2)
+        ).Elif(sink.g[4] == 1,
+            g_lshift_val.eq(3)
+        ).Elif(sink.g[3] == 1,
+            g_lshift_val.eq(4)
+        ).Elif(sink.g[2] == 1,
+            g_lshift_val.eq(5)
+        ).Elif(sink.g[1] == 1,
+            g_lshift_val.eq(6)
+        ).Elif(sink.g[0] == 1,
+            g_lshift_val.eq(7)
+        ).Else(g_exp.eq(14)),
+
+        If(sink.b[7] == 1,
+            b_lshift_val.eq(0)
+        ).Elif(sink.b[6] == 1,
+            b_lshift_val.eq(1)
+        ).Elif(sink.b[5] == 1,
+            b_lshift_val.eq(2)
+        ).Elif(sink.b[4] == 1,
+            b_lshift_val.eq(3)
+        ).Elif(sink.b[3] == 1,
+            b_lshift_val.eq(4)
+        ).Elif(sink.b[2] == 1,
+            b_lshift_val.eq(5)
+        ).Elif(sink.b[1] == 1,
+            b_lshift_val.eq(6)
+        ).Elif(sink.b[0] == 1,
+            b_lshift_val.eq(7)
+        ).Else(b_exp.eq(14))
+
         self.sync += [
 
-            r_frac_val[10:3].eq(sink.r[7:0])
-            g_frac_val[10:3].eq(sink.g[7:0])
-            b_frac_val[10:3].eq(sink.b[7:0])
+            r_frac_val[3:].eq(sink.r[:7]),
+            g_frac_val[3:].eq(sink.g[:7]),
+            b_frac_val[3:].eq(sink.b[:7]),
 
-            r_frac_val[3:0].eq(0)
-            g_frac_val[3:0].eq(0)
-            b_frac_val[3:0].eq(0)
-
-        
-        # Leading one detector
-            If(sink.r[7] == 1,
-                r_lshift_val.eq(0)
-            ).Elif(sink.r[6] == 1,
-                r_lshift_val.eq(1)
-            ).Elif(sink.r[5] == 1,
-                r_lshift_val.eq(2)
-            ).Elif(sink.r[4] == 1,
-                r_lshift_val.eq(3)
-            ).Elif(sink.r[3] == 1,
-                r_lshift_val.eq(4)
-            ).Elif(sink.r[2] == 1,
-                r_lshift_val.eq(5)
-            ).Elif(sink.r[1] == 1,
-                r_lshift_val.eq(6)
-            ).Elif(sink.r[0] == 1,
-                r_lshift_val.eq(7)
-            ).Else(r_exp.eq(14))
-
-
-            If(sink.g[7] == 1,
-                g_lshift_val.eq(0)
-            ).Elif(sink.g[6] == 1,
-                g_lshift_val.eq(1)
-            ).Elif(sink.g[5] == 1,
-                g_lshift_val.eq(2)
-            ).Elif(sink.g[4] == 1,
-                g_lshift_val.eq(3)
-            ).Elif(sink.g[3] == 1,
-                g_lshift_val.eq(4)
-            ).Elif(sink.g[2] == 1,
-                g_lshift_val.eq(5)
-            ).Elif(sink.g[1] == 1,
-                g_lshift_val.eq(6)
-            ).Elif(sink.g[0] == 1,
-                g_lshift_val.eq(7)
-            ).Else(g_exp.eq(14))
-
-            If(sink.b[7] == 1,
-                b_lshift_val.eq(0)
-            ).Elif(sink.b[6] == 1,
-                b_lshift_val.eq(1)
-            ).Elif(sink.b[5] == 1,
-                b_lshift_val.eq(2)
-            ).Elif(sink.b[4] == 1,
-                b_lshift_val.eq(3)
-            ).Elif(sink.b[3] == 1,
-                b_lshift_val.eq(4)
-            ).Elif(sink.b[2] == 1,
-                b_lshift_val.eq(5)
-            ).Elif(sink.b[1] == 1,
-                b_lshift_val.eq(6)
-            ).Elif(sink.b[0] == 1,
-                b_lshift_val.eq(7)
-            ).Else(b_exp.eq(14))
-
+            r_frac_val[:3].eq(0),
+            g_frac_val[:3].eq(0),
+            b_frac_val[:3].eq(0),
         ]
 
         # stage 2
-        # ca*(r-g) & cb*(b-g)
+
         r_frac_shifted = Signal(10)
         r_exp_val = Signal(5)
 
         self.sync += [
 
-            source.r[:11].eq(r_frac_val << r_lshift_val)
-            source.r[11:16].eq(15 - 1 - r_lshift_val)
-            source.r[16].eq(0)
+            source.r_f[:10].eq(r_frac_val << r_lshift_val),
+            source.r_f[10:15].eq(15-1-r_lshift_val),
+            source.r_f[15].eq(0),
 
-            source.g[:11].eq(g_frac_val << g_lshift_val)
-            source.g[11:16].eq(15 - 1 - g_lshift_val)
-            source.g[16].eq(0)
+            source.g_f[:10].eq(g_frac_val << g_lshift_val),
+            source.g_f[10:15].eq(15 - 1 - g_lshift_val),
+            source.g_f[15].eq(0),
 
-            source.b[:11].eq(b_frac_val << b_lshift_val)
-            source.b[11:16].eq(15 - 1 - b_lshift_val)
-            source.b[16].eq(0)
-
+            source.b_f[:10].eq(b_frac_val << b_lshift_val),
+            source.b_f[10:15].eq(15 - 1 - b_lshift_val),
+            source.b_f[15].eq(0)
+        ]
         
-
-
 class RGB2RGB16f(PipelinedActor, Module):
     def __init__(self, rgb_w=8, rgb16f_w=16):
         self.sink = sink = Sink(EndpointDescription(rgb_layout(rgb_w), packetized=True))
