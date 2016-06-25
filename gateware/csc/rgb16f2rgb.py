@@ -9,20 +9,19 @@ from gateware.csc.common import *
 datapath_latency = 2
 
 @DecorateModule(InsertCE)
-class RGB16f2RGBDatapath(Module):
-    def __init__(self, rgb16f_w, rgb_w):
-        self.sink = sink = Record(rgb16f_layout(rgb16f_w))
-        self.source = source = Record(rgb_layout(rgb_w))
+class PIXF2PIXDatapath(Module):
+    def __init__(self, pixf_w, pix_w):
+        self.sink = sink = Record(pixf_layout(pixf_w))
+        self.source = source = Record(pix_layout(pix_w))
 
         # # #
 
-        # delay rgb16f signals
-        rgb16f_delayed = [sink]
+        # delay pixff signals
+        pixf_delayed = [sink]
         for i in range(datapath_latency):
-            rgb16f_n = Record(rgb16f_layout(rgb16f_w))
-            for name in ["r_f", "g_f", "b_f"]:
-                self.sync += getattr(rgb16f_n, name).eq(getattr(rgb16f_delayed[-1], name))
-            rgb16f_delayed.append(rgb16f_n)
+            pixf_n = Record(pixf_layout(pixf_w))
+            self.sync += getattr(pixf_n, "pixf").eq(getattr(pixf_delayed[-1], "pixf"))
+            pixf_delayed.append(pixf_n)
 
 
         # Hardware implementation:
@@ -34,30 +33,14 @@ class RGB16f2RGBDatapath(Module):
         # Correct exponent offset for shifting later
 
         r_frac = Signal(11)
-        g_frac = Signal(11)
-        b_frac = Signal(11)
-
         r_exp = Signal(5)
-        g_exp = Signal(5)
-        b_exp = Signal(5)
-
         r_exp_offset = Signal(5)
-        g_exp_offset = Signal(5)
-        b_exp_offset = Signal(5)
 		
         self.sync += [
         
-            r_exp_offset.eq(15 - sink.r_f[10:15] -1),    
-            g_exp_offset.eq(15 - sink.g_f[10:15] -1),    
-            b_exp_offset.eq(15 - sink.b_f[10:15] -1),
-
-            r_frac[:10].eq(sink.r_f[:10]),
-            g_frac[:10].eq(sink.g_f[:10]),
-            b_frac[:10].eq(sink.b_f[:10]),
-
+            r_exp_offset.eq(15 - sink.pixf[10:15] -1),    
+            r_frac[:10].eq(sink.pixf[:10]),
             r_frac[10].eq(1),
-            g_frac[10].eq(1),
-            b_frac[10].eq(1)
         ]
 
         # stage 2
@@ -66,10 +49,7 @@ class RGB16f2RGBDatapath(Module):
         # Most significant 8 bits of r_frac assigned to int8 r
 
         self.sync += [
-            source.r.eq( (r_frac >> r_exp_offset)[3:]),
-            source.g.eq( (g_frac >> g_exp_offset)[3:]),
-            source.b.eq( (b_frac >> b_exp_offset)[3:])
-
+            source.pix.eq( (r_frac >> r_exp_offset)[3:]),
         ]
 
 
@@ -82,9 +62,17 @@ class RGB16f2RGB(PipelinedActor, Module):
 
         # # #
 
-        self.submodules.datapath = RGB16f2RGBDatapath(rgb16f_w, rgb_w)
-        self.comb += self.datapath.ce.eq(self.pipe_ce)
-        for name in ["r_f", "g_f", "b_f"]:
-            self.comb += getattr(self.datapath.sink, name).eq(getattr(sink, name))
-        for name in ["r", "g", "b"]:
-            self.comb += getattr(source, name).eq(getattr(self.datapath.source, name))
+        self.submodules.datapathr = PIXF2PIXDatapath(rgb16f_w, rgb_w)
+        self.submodules.datapathg = PIXF2PIXDatapath(rgb16f_w, rgb_w)
+        self.submodules.datapathb = PIXF2PIXDatapath(rgb16f_w, rgb_w)
+        self.comb += self.datapathr.ce.eq(self.pipe_ce)
+        self.comb += self.datapathg.ce.eq(self.pipe_ce)
+        self.comb += self.datapathb.ce.eq(self.pipe_ce)
+
+        self.comb += getattr(self.datapathr.sink, "pixf").eq(getattr(sink, "r_f"))
+        self.comb += getattr(self.datapathg.sink, "pixf").eq(getattr(sink, "g_f"))
+        self.comb += getattr(self.datapathb.sink, "pixf").eq(getattr(sink, "b_f"))
+
+        self.comb += getattr(source, "r").eq(getattr(self.datapathr.source, "pix"))
+        self.comb += getattr(source, "g").eq(getattr(self.datapathg.source, "pix"))
+        self.comb += getattr(source, "b").eq(getattr(self.datapathb.source, "pix"))

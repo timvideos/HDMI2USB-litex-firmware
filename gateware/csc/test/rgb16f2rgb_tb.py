@@ -32,7 +32,7 @@ class TB(Module):
         raw_image.rgb16f2rgb_model()
         raw_image.save("lena_rgb16f2rgb_reference.png")
 
-        for i in range(1):
+        for i in range(24):
             yield
 
         # convert image using rgb16f2rgb implementation

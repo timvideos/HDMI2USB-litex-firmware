@@ -27,3 +27,10 @@ def ycbcr444_layout(dw):
 
 def ycbcr422_layout(dw):
     return [("y", dw), ("cb_cr", dw)]
+
+def pix_layout(dw):
+    return [("pix", dw)]
+
+def pixf_layout(dw):
+    return [("pixf", dw)]
+
