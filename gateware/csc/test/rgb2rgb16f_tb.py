@@ -29,10 +29,10 @@ class TB(Module):
 
     def gen_simulation(self, selfp):
         # convert image using rgb2ycbcr model
-#        raw_image = RAWImage(rgb2ycbcr_coefs(8), "lena.png", 64)
-#        raw_image.rgb2ycbcr_model()
-#        raw_image.ycbcr2rgb()
-#        raw_image.save("lena_rgb2ycbcr_reference.png")
+        raw_image = RAWImage(None, "lena.png", 64)
+        raw_image.rgb2rgb16f_model()
+        raw_image.rgb16f2rgb_model()
+        raw_image.save("lena_rgb2rgb16f_reference.png")
 
         for i in range(24):
             yield

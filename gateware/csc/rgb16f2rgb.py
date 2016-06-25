@@ -15,7 +15,6 @@ class RGB16f2RGBDatapath(Module):
         self.source = source = Record(rgb_layout(rgb_w))
 
         # # #
-        [offset, exp_len , frac_len ] = rgb16f_coefs()
 
         # delay rgb16f signals
         rgb16f_delayed = [sink]
@@ -34,31 +33,31 @@ class RGB16f2RGBDatapath(Module):
         # Unpack
         # Correct exponent offset for shifting later
 
-        r_frac = Signal(frac_len+1)
-        g_frac = Signal(frac_len+1)
-        b_frac = Signal(frac_len+1)
+        r_frac = Signal(11)
+        g_frac = Signal(11)
+        b_frac = Signal(11)
 
-        r_exp = Signal(exp_len)
-        g_exp = Signal(exp_len)
-        b_exp = Signal(exp_len)
+        r_exp = Signal(5)
+        g_exp = Signal(5)
+        b_exp = Signal(5)
 
-        r_exp_offset = Signal(exp_len)
-        g_exp_offset = Signal(exp_len)
-        b_exp_offset = Signal(exp_len)
+        r_exp_offset = Signal(5)
+        g_exp_offset = Signal(5)
+        b_exp_offset = Signal(5)
 		
         self.sync += [
         
-            r_exp_offset.eq(offset - sink.r_f[10:15] -1),    
-            g_exp_offset.eq(offset - sink.g_f[10:15] -1),    
-            b_exp_offset.eq(offset - sink.b_f[10:15] -1),
+            r_exp_offset.eq(15 - sink.r_f[10:15] -1),    
+            g_exp_offset.eq(15 - sink.g_f[10:15] -1),    
+            b_exp_offset.eq(15 - sink.b_f[10:15] -1),
 
-            r_frac[:frac_len].eq(sink.r_f[:10]),
-            g_frac[:frac_len].eq(sink.g_f[:10]),
-            b_frac[:frac_len].eq(sink.b_f[:10]),
+            r_frac[:10].eq(sink.r_f[:10]),
+            g_frac[:10].eq(sink.g_f[:10]),
+            b_frac[:10].eq(sink.b_f[:10]),
 
-            r_frac[frac_len].eq(1),
-            g_frac[frac_len].eq(1),
-            b_frac[frac_len].eq(1),
+            r_frac[10].eq(1),
+            g_frac[10].eq(1),
+            b_frac[10].eq(1)
         ]
 
         # stage 2
@@ -67,9 +66,10 @@ class RGB16f2RGBDatapath(Module):
         # Most significant 8 bits of r_frac assigned to int8 r
 
         self.sync += [
-            source.r.eq( (r_frac >> r_exp_offset)[frac_len-7:]),
-            source.g.eq( (g_frac >> g_exp_offset)[frac_len-7:]),
-            source.b.eq( (b_frac >> b_exp_offset)[frac_len-7:])
+            source.r.eq( (r_frac >> r_exp_offset)[3:]),
+            source.g.eq( (g_frac >> g_exp_offset)[3:]),
+            source.b.eq( (b_frac >> b_exp_offset)[3:])
+
         ]
 
 

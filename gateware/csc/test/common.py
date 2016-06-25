@@ -240,9 +240,9 @@ class RAWImage:
     def pack_rgb16f(self):
         self.data = []
         for i in range(self.length):
-            data  = (self.r_f[i] & 0xff) << 32
-            data |= (self.g_f[i] & 0xff) << 16
-            data |= (self.b_f[i] & 0xff) << 0
+            data  = (self.r_f[i] & 0xffff) << 32
+            data |= (self.g_f[i] & 0xffff) << 16
+            data |= (self.b_f[i] & 0xffff) << 0
             self.data.append(data)
         return self.data
 
@@ -273,9 +273,9 @@ class RAWImage:
         self.g_f = []
         self.b_f = []
         for data in self.data:
-            self.r_f.append((data >> 32) & 0xff)
-            self.g_f.append((data >> 16) & 0xff)
-            self.b_f.append((data >> 0 ) & 0xff)
+            self.r_f.append((data >> 32) & 0xffff)
+            self.g_f.append((data >> 16) & 0xffff)
+            self.b_f.append((data >> 0 ) & 0xffff)
         return self.r_f, self.g_f, self.b_f
 
     # Model for our implementation

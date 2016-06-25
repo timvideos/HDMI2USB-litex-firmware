@@ -30,9 +30,9 @@ class TB(Module):
         raw_image = RAWImage(None, "lena.png", 64)
         raw_image.rgb2rgb16f_model()
         raw_image.rgb16f2rgb_model()
-        raw_image.save("lena_rgb16f_reference.png")
+        raw_image.save("lena_rgb16f2rgb_reference.png")
 
-        for i in range(24):
+        for i in range(1):
             yield
 
         # convert image using rgb16f2rgb implementation
