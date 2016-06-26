@@ -41,11 +41,15 @@ class FloatMultDatapath(Module):
         a_exp = Signal(5)
         b_exp = Signal(5)
 
+        a_exp1 = Signal(5)
+        b_exp1 = Signal(5)
+
         a_sign = Signal()
         b_sign = Signal()
 
 
         c_status1 = Signal(2)
+        var1 = Signal(22)
         # 00-0 Zero
         # 01-1 Inf
         # 10-2 Nan
@@ -68,7 +72,12 @@ class FloatMultDatapath(Module):
             a_mant.eq( Cat(a_frac, 1)) ,
             b_mant.eq( Cat(b_frac, 1)) ,
 
-            c_status1.eq(3)
+            a_exp1.eq(a_exp),
+            b_exp1.eq(b_exp),
+
+            c_status1.eq(3),
+#            var1.eq(a_frac)
+#            var1.eq(a_exp)
 
         ]
 
@@ -77,12 +86,15 @@ class FloatMultDatapath(Module):
 
         c_mult = Signal(22)
         c_exp = Signal((7,True))
-        c_status2 = Signal(2)
+        c_status2 = Signal(2)        
+        var2 = Signal(22)
 
         self.sync += [
             c_mult.eq(a_mant * b_mant),
-            c_exp.eq(a_exp + b_exp - 15),
-            c_status2.eq(c_status1)            
+            c_exp.eq(a_exp1 + b_exp1 - 15),
+            c_status2.eq(c_status1),
+#            var2.eq(a_exp1)
+
         ]
 
         # stage 3
@@ -91,11 +103,13 @@ class FloatMultDatapath(Module):
         c_status3 = Signal(2)
         c_mult3 = Signal(22)
         c_exp3 = Signal((7,True))
+        var3 = Signal(22)
         
         self.sync += [
             c_status3.eq(c_status2),
             c_mult3.eq(c_mult),
             c_exp3.eq(c_exp),
+            var3.eq(c_mult[6:]),
 
             If( c_mult[21]==1,
                 one_ptr.eq(0)
@@ -139,7 +153,7 @@ class FloatMultDatapath(Module):
                 one_ptr.eq(19)
             ).Elif(c_mult[ 1] == 1,
                 one_ptr.eq(20)
-            )
+            ),
 
         ]
 
@@ -148,20 +162,25 @@ class FloatMultDatapath(Module):
         c_exp_adjust = Signal((7,True))
         c_mult_shift = Signal(22)
         c_status4 = Signal(2)
+        var4 = Signal(3)
+
         
         self.sync += [
 
             c_status4.eq(c_status3),
-            c_exp_adjust.eq(c_exp3 + 1 - one_ptr),
-            c_mult_shift.eq(c_mult << one_ptr)
+            c_exp_adjust.eq(c_exp3 + 1 - (one_ptr  ) ),
+            c_mult_shift.eq(c_mult << one_ptr+1),
+            var4.eq(0)
+
         ]
 
         # stage 5
         # Normalize and pack
         self.sync += [
-            If(c_status4 == 3,
-                source.c.eq( Cat(c_mult_shift, c_exp_adjust,0) )
-            )
+           If(c_status4 == 3,
+            source.c.eq( Cat(c_mult_shift[12:], c_exp_adjust[:5],0) )
+            ),
+
         ]
 
 

@@ -173,7 +173,10 @@ class RAWImage:
 
 
     def open(self):
-        a, b = ([12288], [12288])
+        l1 = [14464]*20
+        l2 = [14464]*20
+
+        a, b = (l1,l2)
         self.set_mult_in(a, b)
 
     def set_mult_in(self, a, b):
@@ -190,13 +193,17 @@ class RAWImage:
             data = (self.a[i] & 0xffff) << 16
             data |= (self.b[i] & 0xffff) << 0
             self.data.append(data)
-        print (data)
-
+        print(data)
+        a = bin(data)[2:].zfill(32)
+        print(  a[:16]  )
+        print(  a[16:32]  )
+#        print(  bin(data)[2:18].zfill(16)  )        
+#        print(  bin(data)[18:34].zfill(16)  )        
         return self.data
 
     def unpack_mult_in(self):
         self.c = []
         for data in self.data:
             self.c.append((data >> 0) & 0xffff)
-        print(self.c)
+        print(bin(self.c[1])[2:].zfill(16))
         return self.c
