@@ -10,13 +10,18 @@ datapath_latency = 2
 
 @DecorateModule(InsertCE)
 class PIXF2PIXDatapath(Module):
+    """ 
+    Converts a 16 bit half precision floating point 
+    number defined in the range [0-1] to 8 bit unsigned 
+    int represented by a pixel in the range [0-255]
+    """
     def __init__(self, pixf_w, pix_w):
         self.sink = sink = Record(pixf_layout(pixf_w))
         self.source = source = Record(pix_layout(pix_w))
 
         # # #
 
-        # delay pixff signals
+        # delay pixf signals
         pixf_delayed = [sink]
         for i in range(datapath_latency):
             pixf_n = Record(pixf_layout(pixf_w))
@@ -25,31 +30,26 @@ class PIXF2PIXDatapath(Module):
 
 
         # Hardware implementation:
-        # Float is defines in the range [0-1] (higher precision)
-        # Uint8 is defined in the range [0-255]
 
-        # stage 1
-        # Unpack
+        # Stage 1
+        # Unpack frac and exp components
         # Correct exponent offset for shifting later
-
-        r_frac = Signal(11)
-        r_exp = Signal(5)
-        r_exp_offset = Signal(5)
+        frac = Signal(11)
+        exp = Signal(5)
+        exp_offset = Signal(5)
 		
         self.sync += [
         
-            r_exp_offset.eq(15 - sink.pixf[10:15] -1),    
-            r_frac[:10].eq(sink.pixf[:10]),
-            r_frac[10].eq(1),
+            exp_offset.eq(15 - sink.pixf[10:15] -1),    
+            frac[:10].eq(sink.pixf[:10]),
+            frac[10].eq(1),
         ]
 
-        # stage 2
-        # Right shift r_frac by r_exp_offset
-        # r_exp_offset = 1
-        # Most significant 8 bits of r_frac assigned to int8 r
-
+        # Stage 2
+        # Right shift frac by exp_offset
+        # Most significant 8 bits of frac assigned to uint8 pix 
         self.sync += [
-            source.pix.eq( (r_frac >> r_exp_offset)[3:]),
+            source.pix.eq( (frac >> exp_offset)[3:]),
         ]
 
 

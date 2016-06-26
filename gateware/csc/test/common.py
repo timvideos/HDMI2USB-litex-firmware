@@ -349,30 +349,44 @@ class RAWImage:
         return self.r_f, self.g_f, self.b_f
 
 def int2float(x):
-
+    ''' 
+    Converts a 8 bit unsigned int to 16 bit half precision floating 
+    point represntation.Expected input is in the range [0-255]
+    Output is an 16 bit integer whose bit representation correspond 
+    to half precision float format.
+    The value of float output is in the range [0-1] 
+    (higher precision in this range)
+    '''
     if x==0:
         return 0
     else:
-        y = bin(x)[2:].zfill(8)
-        for i in range(len(y)):
-            if y[i] == '1':
-                shift_val = i
+        y = bin(x)[2:].zfill(8)     # Unpack in string
+        for i in range(len(y)):     # Leading one detector 
+            if y[i] == '1':         
+                shift_val = i   
                 break
 
         sign = '0'
         exp = 15 - 1 - shift_val
         frac = y[shift_val+1:][::-1].zfill(10)[::-1]
-        x = sign+bin(exp)[2:].zfill(5)+frac
-        z = int(x, 2)
+        x = sign+bin(exp)[2:].zfill(5)+frac     # Pack together in string
+        z = int(x, 2)                           # Convert string to correspondinf float
         return z
 
 def float2int(x):
-
+    ''' 
+    Converts a 16 bit half precision floating point represntation
+    to 8 bit unsigned int.
+    Output is an 16 bit integer whose bit representation correspond 
+    to half precision float format.    
+    Input is in the range [0-1] 
+    Expected output is in the corresponding range [0-255]
+        
+    '''
     if x==0:
         return 0
     else:
-        y = bin(x)[2:].zfill(16)
-
-        exp = y[1:6]
-        frac = '1'+y[6:16]
+        y = bin(x)[2:].zfill(16)    # Unpack in string
+        exp = y[1:6]                # Unpack exp
+        frac = '1'+y[6:16]          # Unpack frac
         return int(frac,2) >> (17-int(exp,2))

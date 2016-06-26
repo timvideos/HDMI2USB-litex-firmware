@@ -1,4 +1,4 @@
-# rgb2ycbcr
+# rgb2rgb16f
 
 from migen.fhdl.std import *
 from migen.genlib.record import *
@@ -10,6 +10,9 @@ datapath_latency = 2
 
 @DecorateModule(InsertCE)
 class PIX2PIXFDatapath(Module):
+    """ Converts a 8 bit unsigned int represented by a pixel in 
+    the range [0-255] to a 16 bit half precision floating point 
+    pix_number defined in the range [0-1] """
     def __init__(self, pix_w, pixf_w):
         self.sink = sink = Record(pix_layout(pix_w))
         self.source = source = Record(pixf_layout(pixf_w))
@@ -25,47 +28,46 @@ class PIX2PIXFDatapath(Module):
 
         # Hardware implementation:
 
-        # stage 1
+        # Stage 1
         # Leading one detector
 
-        r_lshift_val = Signal(3)
-        r_frac_val = Signal(10)
-        r_exp = Signal(5)
-
+        lshift = Signal(4)
+        frac_val = Signal(10)
 
         self.sync += [
-
             # Leading one detector
             If( sink.pix[7]==1,
-                r_lshift_val.eq(0)
+                lshift.eq(0)
             ).Elif(sink.pix[6] == 1,
-                r_lshift_val.eq(1)
+                lshift.eq(1)
             ).Elif(sink.pix[5] == 1,
-                r_lshift_val.eq(2)
+                lshift.eq(2)
             ).Elif(sink.pix[4] == 1,
-                r_lshift_val.eq(3)
+                lshift.eq(3)
             ).Elif(sink.pix[3] == 1,
-                r_lshift_val.eq(4)
+                lshift.eq(4)
             ).Elif(sink.pix[2] == 1,
-                r_lshift_val.eq(5)
+                lshift.eq(5)
             ).Elif(sink.pix[1] == 1,
-                r_lshift_val.eq(6)
+                lshift.eq(6)
             ).Elif(sink.pix[0] == 1,
-                r_lshift_val.eq(7)
-            ).Else(r_exp.eq(14)),
+                lshift.eq(7)
+            ).Else(
+                lshift.eq(14)   #Zero
+            ),
 
-            r_frac_val[3:].eq(sink.pix[:7]),
-            r_frac_val[:3].eq(0)
+            frac_val[3:].eq(sink.pix[:7]),
+            frac_val[:3].eq(0)
         ]
 
-        # stage 2
+        # Stage 2
+        # Adjust frac and exp components as per lshift
+        # Pack in 16bit float
 
         self.sync += [
-
-            source.pixf[:10].eq(r_frac_val << r_lshift_val),
-            source.pixf[10:15].eq(15 - 1 - r_lshift_val),
+            source.pixf[:10].eq(frac_val << lshift),
+            source.pixf[10:15].eq(15 - 1 - lshift),
             source.pixf[15].eq(1)
-
         ]
         
 class RGB2RGB16f(PipelinedActor, Module):
