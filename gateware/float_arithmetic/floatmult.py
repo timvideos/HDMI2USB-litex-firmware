@@ -49,7 +49,6 @@ class FloatMultDatapath(Module):
 
 
         c_status1 = Signal(2)
-        var1 = Signal(22)
         # 00-0 Zero
         # 01-1 Inf
         # 10-2 Nan
@@ -76,8 +75,6 @@ class FloatMultDatapath(Module):
             b_exp1.eq(b_exp),
 
             c_status1.eq(3),
-#            var1.eq(a_frac)
-#            var1.eq(a_exp)
 
         ]
 

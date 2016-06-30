@@ -2,6 +2,8 @@ from PIL import Image
 
 import random
 import copy
+import numpy as np
+
 
 from migen.fhdl.std import *
 from migen.flow.actor import Sink, Source
@@ -173,8 +175,8 @@ class RAWImage:
 
 
     def open(self):
-        l1 = [14464]*20
-        l2 = [14464]*20
+        l1 = [float2binint(3/1)]*20
+        l2 = [float2binint(1)]*20
 
         a, b = (l1,l2)
         self.set_mult_in(a, b)
@@ -193,7 +195,6 @@ class RAWImage:
             data = (self.a[i] & 0xffff) << 16
             data |= (self.b[i] & 0xffff) << 0
             self.data.append(data)
-        print(data)
         a = bin(data)[2:].zfill(32)
         print(  a[:16]  )
         print(  a[16:32]  )
@@ -205,5 +206,29 @@ class RAWImage:
         self.c = []
         for data in self.data:
             self.c.append((data >> 0) & 0xffff)
-        print(bin(self.c[1])[2:].zfill(16))
+        print(binint2float(self.c[1]))
         return self.c
+
+
+def float2binint(f):
+    x = int(bin(np.float16(f).view('H'))[2:].zfill(16),2)
+    return x
+
+
+def binint2float(x):
+    xs = bin(x)[2:].zfill(16)
+    frac = '1'+xs[6:16]
+    fracn = int(frac,2)
+    exp = xs[1:6]
+    expn = int(exp,2) -15
+
+    if expn == -15 :
+        expn = -14
+        frac = '0'+xs[6:16]
+        fracn = int(frac,2)
+
+    sign = xs[0]
+    signv = int(sign,2)
+
+    y = ((-1)**signv)*(2**(expn))*fracn*(2**(-10))
+    return y
