@@ -27,6 +27,7 @@ from gateware import git_info
 from gateware import i2c
 from gateware import i2c_hack
 from gateware import platform_info
+from gateware.float_arithmetic import floatmult
 
 from targets.common import *
 
@@ -139,6 +140,7 @@ class BaseSoC(SDRAMSoC):
         "spiflash",
         "ddrphy",
         "dna",
+        "floatmult",
         "git_info",
         "platform_info",
         "fx2_reset",
@@ -167,6 +169,7 @@ class BaseSoC(SDRAMSoC):
 
         self.submodules.crg = _CRG(platform, clk_freq)
         self.submodules.dna = dna.DNA()
+        self.submodules.floatmult = floatmult.FloatMult()
         self.submodules.git_info = git_info.GitInfo()
         self.submodules.platform_info = platform_info.PlatformInfo("opsis", self.__class__.__name__[:8])
 

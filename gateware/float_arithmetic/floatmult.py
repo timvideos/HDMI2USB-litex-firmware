@@ -2,6 +2,7 @@
 
 from migen.fhdl.std import *
 from migen.genlib.record import *
+from migen.bank.description import *
 from migen.flow.actor import *
 
 from gateware.float_arithmetic.common import *
@@ -29,7 +30,7 @@ class FloatMultDatapath(Module):
         #   cr = cd*(b-y) + coffset
 
         # stage 1
-        # Uncpack
+        # Unpack
         # Look for special cases
 
         a_frac = Signal(10)
@@ -68,11 +69,22 @@ class FloatMultDatapath(Module):
 
         self.sync += [
 
-            a_mant.eq( Cat(a_frac, 1)) ,
-            b_mant.eq( Cat(b_frac, 1)) ,
+            If( a_exp==0,
+                a_mant.eq( Cat(a_frac, 0)),     
+                a_exp1.eq(a_exp + 1 )       
+            ).Else(
+                a_mant.eq( Cat(a_frac, 1)),
+                a_exp1.eq(a_exp)
+            ),
 
-            a_exp1.eq(a_exp),
-            b_exp1.eq(b_exp),
+            If( b_exp==0,
+                b_mant.eq( Cat(b_frac, 0)),     
+                b_exp1.eq(b_exp + 1 )       
+            ).Else(
+                b_mant.eq( Cat(b_frac, 1)),
+                b_exp1.eq(b_exp)
+            ),  
+
 
             c_status1.eq(3),
 
@@ -150,7 +162,7 @@ class FloatMultDatapath(Module):
                 one_ptr.eq(19)
             ).Elif(c_mult[ 1] == 1,
                 one_ptr.eq(20)
-            ),
+            )
 
         ]
 
@@ -160,13 +172,25 @@ class FloatMultDatapath(Module):
         c_mult_shift = Signal(22)
         c_status4 = Signal(2)
         var4 = Signal(3)
-
         
         self.sync += [
 
             c_status4.eq(c_status3),
-            c_exp_adjust.eq(c_exp3 + 1 - (one_ptr  ) ),
-            c_mult_shift.eq(c_mult << one_ptr+1),
+
+            If( (c_exp3 - one_ptr) < 1,
+
+                c_exp_adjust.eq(0),
+                c_mult_shift.eq( ( (c_mult >> (0-c_exp3)) << 1) )
+
+            ).Else(
+                c_exp_adjust.eq(c_exp3 +1 - one_ptr),
+                c_mult_shift.eq(c_mult << one_ptr+1 )
+
+            ),
+            # if c_exp3+1-one_ptr > 1 do standard
+            # else c_mult = c_mult<<1
+            #c_exp_adjust.eq(c_exp3 + 1 - (one_ptr) ),
+            #c_mult_shift.eq(c_mult << one_ptr+1),
             var4.eq(0)
 
         ]
@@ -181,7 +205,7 @@ class FloatMultDatapath(Module):
         ]
 
 
-class FloatMult(PipelinedActor, Module):
+class FloatMult(PipelinedActor, Module, AutoCSR):
     def __init__(self, dw=16):
         self.sink = sink = Sink(EndpointDescription(in_layout(dw), packetized=True))
         self.source = source = Source(EndpointDescription(out_layout(dw), packetized=True))
@@ -189,6 +213,16 @@ class FloatMult(PipelinedActor, Module):
         self.latency = datapath_latency
 
         # # #
+
+        self._float_in1 = CSRStorage(dw)
+        self._float_in2 = CSRStorage(dw)
+        self._float_out = CSRStatus(dw)
+
+        self.comb += [
+            self._float_in1.storage.eq(getattr(sink, "a")),
+            self._float_in2.storage.eq(getattr(sink, "b")),
+            self._float_out.status.eq(getattr(source, "c"))
+        ]
 
         self.submodules.datapath = FloatMultDatapath(dw)
         self.comb += self.datapath.ce.eq(self.pipe_ce)

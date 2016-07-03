@@ -175,10 +175,12 @@ class RAWImage:
 
 
     def open(self):
-        l1 = [float2binint(3/1)]*20
-        l2 = [float2binint(1)]*20
 
-        a, b = (l1,l2)
+        v1 = 0.01
+        v2 = 0.23435
+        print ("Mult out" , v1*v2)
+        print( "Mult bin", bin(float2binint(v1*v2))[2:].zfill(16) )
+        a, b = ([float2binint(v1)]*4,[float2binint(v2)]*4)
         self.set_mult_in(a, b)
 
     def set_mult_in(self, a, b):
@@ -195,23 +197,22 @@ class RAWImage:
             data = (self.a[i] & 0xffff) << 16
             data |= (self.b[i] & 0xffff) << 0
             self.data.append(data)
-        a = bin(data)[2:].zfill(32)
-        print(  a[:16]  )
-        print(  a[16:32]  )
-#        print(  bin(data)[2:18].zfill(16)  )        
-#        print(  bin(data)[18:34].zfill(16)  )        
+        q = bin(data)[2:].zfill(32)
+        print(  q[:16]  )
+        print(  q[16:32]  )
         return self.data
 
     def unpack_mult_in(self):
         self.c = []
         for data in self.data:
             self.c.append((data >> 0) & 0xffff)
+        print(bin(self.c[1])[2:].zfill(16) )
         print(binint2float(self.c[1]))
         return self.c
 
 
 def float2binint(f):
-    x = int(bin(np.float16(f).view('H'))[2:].zfill(16),2)
+    x = np.float16(f).view('H')
     return x
 
 
@@ -222,7 +223,7 @@ def binint2float(x):
     exp = xs[1:6]
     expn = int(exp,2) -15
 
-    if expn == -15 :
+    if expn == -15 :        #subnormal numbers
         expn = -14
         frac = '0'+xs[6:16]
         fracn = int(frac,2)
