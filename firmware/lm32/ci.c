@@ -83,6 +83,14 @@ static void help_encoder(void)
 }
 #endif
 
+static void help_floatmult(void)
+{
+	puts("floatmult commands (alias: 'f')");
+	puts("  floatmult in1 val             - set floatmult in1 equal val");
+	puts("  floatmult in2 val             - set floatmult in2 equal val");
+	puts("  floatmult out                 - print floatmult out");
+}
+
 static void help_debug(void)
 {
     puts("debug commands (alias 'd')");
@@ -125,6 +133,8 @@ static void help(void)
 #endif
 #ifdef ENCODER_BASE
 	help_encoder();
+	puts("");
+	help_floatmult();
 	puts("");
 #endif
 	help_debug();
@@ -637,6 +647,23 @@ void ci_service(void)
 			help_encoder();
 	}
 #endif
+
+	else if((strcmp(token, "floatmult") == 0) || (strcmp(token, "f") == 0)) {
+		token = get_token(&str);
+		if(strcmp(token, "in1") == 0){
+			floatmult_float_in1_write(atoi(get_token(&str)));
+			printf(" Float Mult in1 = %d\n", floatmult_float_in1_read());
+		}	
+		else if(strcmp(token, "in2") == 0){
+			floatmult_float_in2_write(atoi(get_token(&str)));
+			printf(" Float Mult out = %d\n", floatmult_float_in2_read());
+		}
+		else if(strcmp(token, "out") == 0)
+			printf(" Float Mult out = %d\n", floatmult_float_out_read() );
+		else
+			help_floatmult();
+	}
+
 	else if((strcmp(token, "status") == 0) || (strcmp(token, "s") == 0)) {
 		token = get_token(&str);
 		if(strcmp(token, "on") == 0)

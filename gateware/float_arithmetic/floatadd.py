@@ -1,4 +1,4 @@
-# rgb2ycbcr
+# floatadd
 
 from migen.fhdl.std import *
 from migen.genlib.record import *
@@ -10,7 +10,7 @@ from gateware.float_arithmetic.common import *
 datapath_latency = 5
 
 @DecorateModule(InsertCE)
-class FloatMultDatapath(Module):
+class FloatAddDatapath(Module):
     def __init__(self,dw):
         self.sink = sink = Record(in_layout(dw))
         self.source = source = Record(out_layout(dw))
@@ -225,7 +225,7 @@ class FloatMultDatapath(Module):
         ]
 
 
-class FloatMult(PipelinedActor, Module, AutoCSR):
+class FloatAdd(PipelinedActor, Module, AutoCSR):
     def __init__(self, dw=16):
         self.sink = sink = Sink(EndpointDescription(in_layout(dw), packetized=True))
         self.source = source = Source(EndpointDescription(out_layout(dw), packetized=True))
@@ -244,7 +244,7 @@ class FloatMult(PipelinedActor, Module, AutoCSR):
             self._float_out.status.eq(getattr(source, "c"))
         ]
 
-        self.submodules.datapath = FloatMultDatapath(dw)
+        self.submodules.datapath = FloatAddDatapath(dw)
         self.comb += self.datapath.ce.eq(self.pipe_ce)
         for name in ["a", "b"]:
             self.comb += getattr(self.datapath.sink, name).eq(getattr(sink, name))
