@@ -134,9 +134,9 @@ static void help(void)
 #ifdef ENCODER_BASE
 	help_encoder();
 	puts("");
+#endif
 	help_floatmult();
 	puts("");
-#endif
 	help_debug();
 }
 
@@ -656,7 +656,7 @@ void ci_service(void)
 		}	
 		else if(strcmp(token, "in2") == 0){
 			floatmult_float_in2_write(atoi(get_token(&str)));
-			printf(" Float Mult out = %d\n", floatmult_float_in2_read());
+			printf(" Float Mult in2 = %d\n", floatmult_float_in2_read());
 		}
 		else if(strcmp(token, "out") == 0)
 			printf(" Float Mult out = %d\n", floatmult_float_out_read() );
