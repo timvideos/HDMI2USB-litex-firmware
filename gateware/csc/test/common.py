@@ -169,6 +169,10 @@ class RAWImage:
         self.cb = None
         self.cr = None
 
+        self.r_f = None
+        self.g_f = None
+        self.b_f = None
+
         self.data = []
 
         self.coefs = coefs
@@ -176,7 +180,7 @@ class RAWImage:
         self.length = None
 
         if filename is not None:
-            self.open(filename)
+            self.open(filename) 
 
 
     def open(self, filename):
@@ -206,10 +210,14 @@ class RAWImage:
         self.cr = cr
         self.length = len(y)
 
+    def set_rgb16f(self, r_f, g_f, b_f):
+        self.r_f = r_f
+        self.g_f = g_f
+        self.b_f = b_f
+        self.length = len(r_f)
 
     def set_data(self, data):
         self.data = data
-
 
     def pack_rgb(self):
         self.data = []
@@ -220,7 +228,6 @@ class RAWImage:
             self.data.append(data)
         return self.data
 
-
     def pack_ycbcr(self):
         self.data = []
         for i in range(self.length):
@@ -230,6 +237,14 @@ class RAWImage:
             self.data.append(data)
         return self.data
 
+    def pack_rgb16f(self):
+        self.data = []
+        for i in range(self.length):
+            data  = (self.r_f[i] & 0xffff) << 32
+            data |= (self.g_f[i] & 0xffff) << 16
+            data |= (self.b_f[i] & 0xffff) << 0
+            self.data.append(data)
+        return self.data
 
     def unpack_rgb(self):
         self.r = []
@@ -252,6 +267,16 @@ class RAWImage:
             self.cr.append((data >> 0) & 0xff)
         return self.y, self.cb, self.cr
 
+
+    def unpack_rgb16f(self):
+        self.r_f = []
+        self.g_f = []
+        self.b_f = []
+        for data in self.data:
+            self.r_f.append((data >> 32) & 0xffff)
+            self.g_f.append((data >> 16) & 0xffff)
+            self.b_f.append((data >> 0 ) & 0xffff)
+        return self.r_f, self.g_f, self.b_f
 
     # Model for our implementation
     def rgb2ycbcr_model(self):
@@ -299,6 +324,69 @@ class RAWImage:
             self.r.append(int(y + (cr - 128) *  1.402))
             self.g.append(int(y + (cb - 128) * -0.34414 + (cr - 128) * -0.71414))
             self.b.append(int(y + (cb - 128) *  1.772))
+        return self.r, self.g, self.b        
+
+    # Convert 16 bit float to 8 bit pixel
+    def rgb16f2rgb_model(self):
+        self.r = []
+        self.g = []
+        self.b = []
+        for r_f, g_f, b_f in zip(self.r_f, self.g_f, self.b_f):
+            self.r.append(float2int(r_f))
+            self.g.append(float2int(g_f))
+            self.b.append(float2int(b_f))
         return self.r, self.g, self.b
 
+    # Convert 8 bit pixel to 16 bit float
+    def rgb2rgb16f_model(self):
+        self.r_f = []
+        self.g_f = []
+        self.b_f = []
+        for r, g, b in zip(self.r, self.g, self.b):
+            self.r_f.append(int2float(r))
+            self.g_f.append(int2float(g))
+            self.b_f.append(int2float(b))
+        return self.r_f, self.g_f, self.b_f
 
+def int2float(x):
+    ''' 
+    Converts a 8 bit unsigned int to 16 bit half precision floating 
+    point represntation.Expected input is in the range [0-255]
+    Output is an 16 bit integer whose bit representation correspond 
+    to half precision float format.
+    The value of float output is in the range [0-1] 
+    (higher precision in this range)
+    '''
+    if x==0:
+        return 0
+    else:
+        y = bin(x)[2:].zfill(8)     # Unpack in string
+        for i in range(len(y)):     # Leading one detector 
+            if y[i] == '1':         
+                shift_val = i   
+                break
+
+        sign = '0'
+        exp = 15 - 1 - shift_val
+        frac = y[shift_val+1:][::-1].zfill(10)[::-1]
+        x = sign+bin(exp)[2:].zfill(5)+frac     # Pack together in string
+        z = int(x, 2)                           # Convert string to correspondinf float
+        return z
+
+def float2int(x):
+    ''' 
+    Converts a 16 bit half precision floating point represntation
+    to 8 bit unsigned int.
+    Output is an 16 bit integer whose bit representation correspond 
+    to half precision float format.    
+    Input is in the range [0-1] 
+    Expected output is in the corresponding range [0-255]
+        
+    '''
+    if x==0:
+        return 0
+    else:
+        y = bin(x)[2:].zfill(16)    # Unpack in string
+        exp = y[1:6]                # Unpack exp
+        frac = '1'+y[6:16]          # Unpack frac
+        return int(frac,2) >> (17-int(exp,2))
