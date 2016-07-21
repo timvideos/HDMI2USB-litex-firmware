@@ -16,11 +16,11 @@ class TB(Module):
 
         self.comb += [
         	Record.connect(self.streamer.source, self.floatadd.sink, leave_out=["data"]),
-            self.floatadd.sink.payload.a.eq(self.streamer.source.data[16:32]),
-            self.floatadd.sink.payload.b.eq(self.streamer.source.data[0:16]),
+            self.floatadd.sink.payload.in1.eq(self.streamer.source.data[16:32]),
+            self.floatadd.sink.payload.in2.eq(self.streamer.source.data[0:16]),
 
-            Record.connect(self.floatadd.source, self.logger.sink, leave_out=["c"]),
-            self.logger.sink.data[0:16].eq(self.floatadd.source.c)
+            Record.connect(self.floatadd.source, self.logger.sink, leave_out=["out"]),
+            self.logger.sink.data[0:16].eq(self.floatadd.source.out)
         ]
 
     def gen_simulation(self, selfp):

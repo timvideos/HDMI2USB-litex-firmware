@@ -6,8 +6,6 @@ from migen.flow.actor import *
 
 from gateware.csc.common import *
 
-datapath_latency = 2
-
 @DecorateModule(InsertCE)
 class PIXF2PIXDatapath(Module):
     """ 
@@ -15,6 +13,7 @@ class PIXF2PIXDatapath(Module):
     number defined in the range [0-1] to 8 bit unsigned 
     int represented by a pixel in the range [0-255]
     """
+    latency = 2
     def __init__(self, pixf_w, pix_w):
         self.sink = sink = Record(pixf_layout(pixf_w))
         self.source = source = Record(pix_layout(pix_w))
@@ -23,7 +22,7 @@ class PIXF2PIXDatapath(Module):
 
         # delay pixf signals
         pixf_delayed = [sink]
-        for i in range(datapath_latency):
+        for i in range(self.latency):
             pixf_n = Record(pixf_layout(pixf_w))
             self.sync += getattr(pixf_n, "pixf").eq(getattr(pixf_delayed[-1], "pixf"))
             pixf_delayed.append(pixf_n)
@@ -57,22 +56,14 @@ class RGB16f2RGB(PipelinedActor, Module):
     def __init__(self, rgb16f_w=16, rgb_w=8, coef_w=8):
         self.sink = sink = Sink(EndpointDescription(rgb16f_layout(rgb16f_w), packetized=True))
         self.source = source = Source(EndpointDescription(rgb_layout(rgb_w), packetized=True))
-        PipelinedActor.__init__(self, datapath_latency)
-        self.latency = datapath_latency
 
         # # #
 
-        self.submodules.datapathr = PIXF2PIXDatapath(rgb16f_w, rgb_w)
-        self.submodules.datapathg = PIXF2PIXDatapath(rgb16f_w, rgb_w)
-        self.submodules.datapathb = PIXF2PIXDatapath(rgb16f_w, rgb_w)
-        self.comb += self.datapathr.ce.eq(self.pipe_ce)
-        self.comb += self.datapathg.ce.eq(self.pipe_ce)
-        self.comb += self.datapathb.ce.eq(self.pipe_ce)
+        for name in ["r", "g", "b"]:
+            self.submodules.datapath = PIXF2PIXDatapath(rgb16f_w, rgb_w)
+            PipelinedActor.__init__(self, self.datapath.latency)
+            self.comb += self.datapath.ce.eq(self.pipe_ce)
+            self.comb += getattr(self.datapath.sink, "pixf").eq(getattr(sink, name +"f"))
+            self.comb += getattr(source, name).eq(getattr(self.datapath.source, "pix"))
 
-        self.comb += getattr(self.datapathr.sink, "pixf").eq(getattr(sink, "r_f"))
-        self.comb += getattr(self.datapathg.sink, "pixf").eq(getattr(sink, "g_f"))
-        self.comb += getattr(self.datapathb.sink, "pixf").eq(getattr(sink, "b_f"))
-
-        self.comb += getattr(source, "r").eq(getattr(self.datapathr.source, "pix"))
-        self.comb += getattr(source, "g").eq(getattr(self.datapathg.source, "pix"))
-        self.comb += getattr(source, "b").eq(getattr(self.datapathb.source, "pix"))
+        self.latency = self.datapath.latency

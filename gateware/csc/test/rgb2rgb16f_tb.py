@@ -20,10 +20,10 @@ class TB(Module):
             self.rgb2rgb16f.sink.payload.g.eq(self.streamer.source.data[8:16]),
             self.rgb2rgb16f.sink.payload.b.eq(self.streamer.source.data[0:8]),
 
-            Record.connect(self.rgb2rgb16f.source, self.logger.sink, leave_out=["r_f", "g_f", "b_f"]),
-            self.logger.sink.data[32:48].eq(self.rgb2rgb16f.source.r_f),
-            self.logger.sink.data[16:32].eq(self.rgb2rgb16f.source.g_f),
-            self.logger.sink.data[ 0:16].eq(self.rgb2rgb16f.source.b_f)
+            Record.connect(self.rgb2rgb16f.source, self.logger.sink, leave_out=["rf", "gf", "bf"]),
+            self.logger.sink.data[32:48].eq(self.rgb2rgb16f.source.rf),
+            self.logger.sink.data[16:32].eq(self.rgb2rgb16f.source.gf),
+            self.logger.sink.data[ 0:16].eq(self.rgb2rgb16f.source.bf)
         ]
 
 

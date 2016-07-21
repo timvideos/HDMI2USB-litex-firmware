@@ -650,17 +650,17 @@ void ci_service(void)
 
 	else if((strcmp(token, "floatmult") == 0) || (strcmp(token, "f") == 0)) {
 		token = get_token(&str);
-		if(strcmp(token, "in1") == 0){
-			floatmult_float_in1_write(atoi(get_token(&str)));
-			printf(" Float Mult in1 = %d\n", floatmult_float_in1_read());
-		}	
-		else if(strcmp(token, "in2") == 0){
-			floatmult_float_in2_write(atoi(get_token(&str)));
-			printf(" Float Mult in2 = %d\n", floatmult_float_in2_read());
-		}
-		else if(strcmp(token, "out") == 0)
-			printf(" Float Mult out = %d\n", floatmult_float_out_read() );
-		else
+//		if(strcmp(token, "in1") == 0){
+//			floatmult_float_in1_write(atoi(get_token(&str)));
+//			printf(" Float Mult in1 = %d\n", floatmult_float_in1_read());
+//		}	
+//		else if(strcmp(token, "in2") == 0){
+//			floatmult_float_in2_write(atoi(get_token(&str)));
+//			printf(" Float Mult in2 = %d\n", floatmult_float_in2_read());
+//		}
+//		else if(strcmp(token, "out") == 0)
+//			printf(" Float Mult out = %d\n", floatmult_float_out_read() );
+//		else
 			help_floatmult();
 	}
 

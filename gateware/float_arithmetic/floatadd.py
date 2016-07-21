@@ -1,4 +1,10 @@
-# floatadd
+'''
+FloatAddDatapath class: Add two floating point numbers in1 and in2, returns 
+their output out in the same float16 format.
+
+FloatAdd class: Use the FloatAddDatapath above and generates a pipelined
+module implemented using five stage pipeline.
+'''
 
 from migen.fhdl.std import *
 from migen.genlib.record import *
@@ -19,190 +25,182 @@ class LeadOne(Module):
 
 @DecorateModule(InsertCE)
 class FloatAddDatapath(Module):
+    
+    latency = 5
+    
     def __init__(self,dw):
         self.sink = sink = Record(in_layout(dw))
         self.source = source = Record(out_layout(dw))
 
         # delay rgb signals
         in_delayed = [sink]
-        for i in range(datapath_latency):
+        for i in range(self.latency):
             in_n = Record(in_layout(dw))
-            for name in ["a", "b"]:
+            for name in ["in1", "in2"]:
                 self.sync += getattr(in_n, name).eq(getattr(in_delayed[-1], name))
             in_delayed.append(in_n)
 
         # Hardware implementation:
 
-        # stage 1
+        # Stage 1
         # Unpack
-        # Look for special cases
         # Substract Exponents
 
-        a_frac = Signal(10)
-        b_frac = Signal(10)
+        in1_frac = Signal(10)
+        in2_frac = Signal(10)
         
-        a_mant = Signal(11)
-        b_mant = Signal(11)
+        in1_mant = Signal(11)
+        in2_mant = Signal(11)
 
-        a_exp = Signal(5)
-        b_exp = Signal(5)
+        in1_exp = Signal(5)
+        in2_exp = Signal(5)
 
-        a_minus_b_exp = Signal((6,True))
+        in1_minus_in2_exp = Signal((6,True))
 
-        a_exp1 = Signal(5)
-        b_exp1 = Signal(5)
+        in1_exp1 = Signal(5)
+        in2_exp1 = Signal(5)
 
-        a_sign = Signal()
-        b_sign = Signal()
+        in1_sign = Signal()
+        in2_sign = Signal()
 
 
-        c_status1 = Signal(2)
+        out_status1 = Signal(2)
         # 00-0 Zero
         # 01-1 Inf
         # 10-2 Nan
         # 11-3 Normal 
         
-        a_stage1 = Signal(16)
-        b_stage1 = Signal(16)
+        in1_stage1 = Signal(16)
+        in2_stage1 = Signal(16)
 
         self.comb += [
-            a_frac.eq( Cat(sink.a[:10], 1) ),
-            b_frac.eq( Cat(sink.b[:10], 1) ),
+            in1_frac.eq( sink.in1[:10] ),
+            in2_frac.eq( sink.in2[:10] ),
 
-            a_exp.eq( sink.a[10:15] ),
-            b_exp.eq( sink.b[10:15] ),
+            in1_exp.eq( sink.in1[10:15] ),
+            in2_exp.eq( sink.in2[10:15] ),
 
-            a_sign.eq( sink.a[15] ),
-            b_sign.eq( sink.a[15] ),
+            in1_sign.eq( sink.in1[15] ),
+            in2_sign.eq( sink.in1[15] ),
 
         ]
 
         self.comb += [
-            If( a_exp==0,
-                a_mant.eq( Cat(a_frac, 0)),     
-                a_exp1.eq( a_exp + 1 )       
+            If( in1_exp==0,
+                in1_mant.eq( Cat(sink.in1[:10], 0)),     
+                in1_exp1.eq( sink.in1[10:15] + 1 )       
             ).Else(
-                a_mant.eq( Cat(a_frac, 1)),
-                a_exp1.eq( a_exp)
+                in1_mant.eq( Cat(sink.in1[:10], 1)),
+                in1_exp1.eq( sink.in1[10:15])
             ),
 
-            If( b_exp==0,
-                b_mant.eq( Cat(b_frac, 0)),     
-                b_exp1.eq(b_exp + 1 )       
+            If( in2_exp==0,
+                in2_mant.eq( Cat(sink.in2[:10], 0)),     
+                in2_exp1.eq( sink.in2[10:15] + 1 )       
             ).Else(
-                b_mant.eq( Cat(b_frac, 1)),
-                b_exp1.eq(b_exp)
+                in2_mant.eq( Cat(sink.in2[:10], 1)),
+                in2_exp1.eq( sink.in2[10:15])
             )
         ]
 
-        a_frac_stage1 = Signal(11)
-        b_frac_stage1 = Signal(11)
-        a_sign_stage1 = Signal(11)
-        b_sign_stage1 = Signal(11)
-        a_exp_stage1 = Signal(5)
-        b_exp_stage1 = Signal(5)
+        in1_frac_stage1 = Signal(11)
+        in2_frac_stage1 = Signal(11)
+        in1_sign_stage1 = Signal(11)
+        in2_sign_stage1 = Signal(11)
+        in1_exp_stage1 = Signal(5)
+        in2_exp_stage1 = Signal(5)
 
         self.sync += [
 
-            a_minus_b_exp.eq(a_exp1 - b_exp),
-            a_frac_stage1.eq(a_mant),	
-            b_frac_stage1.eq(b_mant),	
-            a_exp_stage1.eq(a_exp),   
-            b_exp_stage1.eq(b_exp),   
-            a_sign_stage1.eq(a_sign),
-            b_sign_stage1.eq(b_sign),
-            c_status1.eq(3),
+            in1_minus_in2_exp.eq(in1_exp1 - in2_exp),
+            in1_frac_stage1.eq(in1_mant),   
+            in2_frac_stage1.eq(in2_mant),   
+            in1_exp_stage1.eq(in1_exp1),   
+            in2_exp_stage1.eq(in2_exp1),   
+            in1_sign_stage1.eq(in1_sign),
+            in2_sign_stage1.eq(in2_sign),
+            out_status1.eq(3),
 
         ]
 
-        # stage 2
-        # Adjust fracs to common exponent
-
-        a_frac_stage2 = Signal(11)
-        b_frac_stage2 = Signal(11)
-        a_sign_stage2 = Signal(11)
-        b_sign_stage2 = Signal(11)
-        a_minus_b_exp_stage2 = Signal(5)
+        # Stage 2
+        # Adjust both the input fracs to common exponent
+        in1_frac_stage2 = Signal(11)
+        in2_frac_stage2 = Signal(11)
+        in1_sign_stage2 = Signal(11)
+        in2_sign_stage2 = Signal(11)
+        in1_minus_in2_exp_stage2 = Signal(5)
         out_2 = Signal(16)
 
         self.sync += [
 
-            If( ~a_minus_b_exp[5], [
-                b_frac_stage2.eq(b_frac_stage1 >> a_minus_b_exp),
-                a_frac_stage2.eq(a_frac_stage1),
-                a_minus_b_exp_stage2.eq(a_exp_stage1)
+            If( ~in1_minus_in2_exp[5], [
+                in2_frac_stage2.eq(in2_frac_stage1 >> in1_minus_in2_exp),
+                in1_frac_stage2.eq(in1_frac_stage1),
+                in1_minus_in2_exp_stage2.eq(in1_exp_stage1)
                 ]
             ).Else ( [
-#                out_2.eq(a_frac_stage1 >> (-1)*(-1)),
-                a_frac_stage2.eq(a_frac_stage1 >> (-1)*a_minus_b_exp ),
-                a_minus_b_exp_stage2.eq(b_exp_stage1),
-                b_frac_stage2.eq(b_frac_stage1),
+                in1_frac_stage2.eq(in1_frac_stage1 >> (-1)*in1_minus_in2_exp ),
+                in1_minus_in2_exp_stage2.eq(in2_exp_stage1),
+                in2_frac_stage2.eq(in2_frac_stage1),
                 ]
             ),
-            a_sign_stage2.eq(a_sign_stage1),
-            b_sign_stage2.eq(b_sign_stage1),
-#            out_2.eq(a_frac_stage2)
-
+            in1_sign_stage2.eq(in1_sign_stage1),
+            in2_sign_stage2.eq(in2_sign_stage1),
         ]
 
-        # stage 3
+        # Stage 3
         # Adder Unit
-
-
-        a_plus_b_frac = Signal(12)
-        a_plus_b_sign = Signal(1)
-        a_minus_b_exp_stage3 = Signal(5)
+        in1_plus_in2_frac = Signal(12)
+        in1_plus_in2_sign = Signal(1)
+        in1_minus_in2_exp_stage3 = Signal(5)
         out_3 = Signal(16)
 
         self.sync += [
-            Cat(a_plus_b_frac, a_plus_b_sign).eq(a_frac_stage2+b_frac_stage2),
-            a_minus_b_exp_stage3.eq(a_minus_b_exp_stage2),
+            Cat(in1_plus_in2_frac, in1_plus_in2_sign).eq(in1_frac_stage2+in2_frac_stage2),
+            in1_minus_in2_exp_stage3.eq(in1_minus_in2_exp_stage2),
             out_3.eq(out_2)
         ]
 
-        # stage 4
+        # Stage 4
         # Shift and Adjust
-
         leadone = Signal(4)
         self.submodules.l1 = LeadOne()
-        
         self.comb += [
-            self.l1.datai.eq(a_plus_b_frac),
+            self.l1.datai.eq(in1_plus_in2_frac),
             leadone.eq(self.l1.leadone)
         ]
-
-        c_sign_stage4 = Signal(1)	
-        c_frac_stage4 = Signal(12)	
-        c_exp_stage4 = Signal(5)
+        out_sign_stage4 = Signal(1)   
+        out_frac_stage4 = Signal(12)  
+        out_exp_stage4 = Signal(5)
         out_4 = Signal(16)
-
         self.sync += [
-            c_frac_stage4.eq(a_plus_b_frac << (leadone)),
-            c_exp_stage4.eq(a_minus_b_exp_stage3 - leadone + 1 ),
-            c_sign_stage4.eq(a_plus_b_sign),
-            out_4.eq(c_frac_stage4)
+            out_frac_stage4.eq(in1_plus_in2_frac << (leadone)),
+            out_exp_stage4.eq(in1_minus_in2_exp_stage3 - leadone + 1 ),
+            out_sign_stage4.eq(in1_plus_in2_sign),
+            out_4.eq(out_frac_stage4)
         ]
 
         # stage 5
         # Normalize and pack
         self.sync += [
-
-#            source.c.eq( c_frac_stage4[1:11])
-            source.c.eq( Cat( c_frac_stage4[1:11] , c_exp_stage4 ,c_sign_stage4 ) )
+            source.out.eq( Cat( out_frac_stage4[1:11] , out_exp_stage4 ,out_sign_stage4 ) )
         ]
 
 
-class FloatAdd(PipelinedActor, Module, AutoCSR):
+class FloatAddRGB(PipelinedActor, Module):
     def __init__(self, dw=16):
-        self.sink = sink = Sink(EndpointDescription(in_layout(dw), packetized=True))
-        self.source = source = Source(EndpointDescription(out_layout(dw), packetized=True))
-        PipelinedActor.__init__(self, datapath_latency)
-        self.latency = datapath_latency
+        self.sink = sink = Sink(EndpointDescription(rgb16f_layout(dw), packetized=True))
+        self.source = source = Source(EndpointDescription(rgb16f_layout(dw), packetized=True))
 
         # # #
 
-        self.submodules.datapath = FloatAddDatapath(dw)
-        self.comb += self.datapath.ce.eq(self.pipe_ce)
-        for name in ["a", "b"]:
-            self.comb += getattr(self.datapath.sink, name).eq(getattr(sink, name))
-        self.comb += getattr(source, "c").eq(getattr(self.datapath.source, "c"))
+        for name in ["r", "g", "b"]:
+            self.submodules.datapath = FloatAddDatapath(dw)
+            PipelinedActor.__init__(self, self.datapath.latency)
+            self.comb += self.datapath.ce.eq(self.pipe_ce)
+            self.comb += getattr(self.datapath.sink, "in1").eq(getattr(sink, name + "f"))
+            self.comb += getattr(self.datapath.sink, "in2").eq(0)
+            self.comb += getattr(source, name + "f").eq(getattr(self.datapath.source, "out"))
+
+        self.latency = self.datapath.latency

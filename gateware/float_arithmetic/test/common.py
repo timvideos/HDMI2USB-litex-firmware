@@ -176,10 +176,10 @@ class RAWImage:
 
     def open(self):
 
-        v1 = 1
-        v2 = 1
-        print ("Mult out" , v1*v2)
-        print( "Mult bin", bin(float2binint(v1*v2))[2:].zfill(16) )
+        v1 = 0
+        v2 = 0.6346
+        print ("Mult out" , v1+v2)
+        print( "Mult bin", bin(float2binint(v1+v2))[2:].zfill(16) )
         a, b = ([float2binint(v1)]*5,[float2binint(v2)]*5)
         self.set_mult_in(a, b)
 

@@ -20,7 +20,7 @@ def rgb_layout(dw):
     return [("r", dw), ("g", dw), ("b", dw)]
 
 def rgb16f_layout(dw):
-    return [("r_f", dw), ("g_f", dw), ("b_f", dw)]
+    return [("rf", dw), ("gf", dw), ("bf", dw)]
 
 def ycbcr444_layout(dw):
     return [("y", dw), ("cb", dw), ("cr", dw)]

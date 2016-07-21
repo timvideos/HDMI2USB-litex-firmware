@@ -5,3 +5,6 @@ def in_layout(dw):
 
 def out_layout(dw):
     return [("out", dw)]
+
+def rgb16f_layout(dw):
+    return [("rf", dw), ("gf", dw), ("bf", dw)]

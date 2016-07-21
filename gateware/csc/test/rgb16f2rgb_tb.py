@@ -15,9 +15,9 @@ class TB(Module):
 
         self.comb += [
             Record.connect(self.streamer.source, self.rgb16f2rgb.sink, leave_out=["data"]),
-            self.rgb16f2rgb.sink.payload.r_f.eq(self.streamer.source.data[32:48]),
-            self.rgb16f2rgb.sink.payload.g_f.eq(self.streamer.source.data[16:32]),
-            self.rgb16f2rgb.sink.payload.b_f.eq(self.streamer.source.data[0:16]),
+            self.rgb16f2rgb.sink.payload.rf.eq(self.streamer.source.data[32:48]),
+            self.rgb16f2rgb.sink.payload.gf.eq(self.streamer.source.data[16:32]),
+            self.rgb16f2rgb.sink.payload.bf.eq(self.streamer.source.data[0:16]),
 
             Record.connect(self.rgb16f2rgb.source, self.logger.sink, leave_out=["r", "g", "b"]),
             self.logger.sink.data[16:24].eq(self.rgb16f2rgb.source.r),

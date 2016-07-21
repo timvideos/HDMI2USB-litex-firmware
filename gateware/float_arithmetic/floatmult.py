@@ -13,8 +13,6 @@ from migen.flow.actor import *
 
 from gateware.float_arithmetic.common import *
 
-datapath_latency = 5
-
 class LeadOne(Module):
     """
     This return the position of leading one of the Signal Object datai, as the 
@@ -36,13 +34,14 @@ class FloatMultDatapath(Module):
     Implemented as a 5 stage pipeline, design is based on float16 design doc. 
     Google Docs Link: https://goo.gl/Rvx2B7    
     """
-    def __init__(self,dw):
+    latency = 5
+    def __init__(self, dw):
         self.sink = sink = Record(in_layout(dw))
         self.source = source = Record(out_layout(dw))
 
         # delay rgb signals
         in_delayed = [sink]
-        for i in range(datapath_latency):
+        for i in range(self.latency):
             in_n = Record(in_layout(dw))
             for name in ["in1", "in2"]:
                 self.sync += getattr(in_n, name).eq(getattr(in_delayed[-1], name))
@@ -175,25 +174,41 @@ class FloatMult(PipelinedActor, Module, AutoCSR):
     def __init__(self, dw=16):
         self.sink = sink = Sink(EndpointDescription(in_layout(dw), packetized=True))
         self.source = source = Source(EndpointDescription(out_layout(dw), packetized=True))
-        PipelinedActor.__init__(self, datapath_latency)
-        self.latency = datapath_latency
 
         # # #
 
         self.submodules.datapath = FloatMultDatapath(dw)
+        PipelinedActor.__init__(self, self.datapath.latency)
         self.comb += self.datapath.ce.eq(self.pipe_ce)
         for name in ["in1", "in2"]:
             self.comb += getattr(self.datapath.sink, name).eq(getattr(sink, name))
         self.comb += getattr(source, "out").eq(getattr(self.datapath.source, "out"))
+        self.latency = self.datapath.latency
 
-        self._float_in1 = CSRStorage(dw)
-        self._float_in2 = CSRStorage(dw)
-        self._float_out = CSRStatus(dw)
+#        self._float_in1 = CSRStorage(dw)
+#        self._float_in2 = CSRStorage(dw)
+#        self._float_out = CSRStatus(dw)
 
-        self.comb += [
-            getattr(sink, "in1").eq(self._float_in1.storage),
-            getattr(sink, "in2").eq(self._float_in2.storage),
-            self._float_out.status.eq(getattr(source, "out"))
-        ]
+#        self.comb += [
+#            getattr(sink, "in1").eq(self._float_in1.storage),
+#            getattr(sink, "in2").eq(self._float_in2.storage),
+#            self._float_out.status.eq(getattr(source, "out"))
+#        ]
 
 
+class FloatMultRGB(PipelinedActor, Module):
+    def __init__(self, dw=16):
+        self.sink = sink = Sink(EndpointDescription(rgb16f_layout(dw), packetized=True))
+        self.source = source = Source(EndpointDescription(rgb16f_layout(dw), packetized=True))
+
+        # # #
+
+        for name in ["r", "g", "b"]:
+            self.submodules.datapath = FloatMultDatapath(dw)
+            PipelinedActor.__init__(self, self.datapath.latency)
+            self.comb += self.datapath.ce.eq(self.pipe_ce)
+            self.comb += getattr(self.datapath.sink, "in1").eq(getattr(sink, name + "f"))
+            self.comb += getattr(self.datapath.sink, "in2").eq(15360)
+            self.comb += getattr(source, name + "f").eq(getattr(self.datapath.source, "out"))
+
+        self.latency = self.datapath.latency
