@@ -51,18 +51,14 @@ class FloatMultDatapath(Module):
         # Unpack
         # Look for special cases
 
-        in1_frac = Signal(10)
-        in2_frac = Signal(10)
         in1_mant = Signal(11)
         in2_mant = Signal(11)
 
-        in1_exp = Signal(5)
-        in2_exp = Signal(5)
         in1_exp1 = Signal(5)
         in2_exp1 = Signal(5)
 
-        in1_sign = Signal()
-        in2_sign = Signal()
+#        in1_sign = Signal()
+#        in2_sign = Signal()
 
         out_status1 = Signal(2)
         status_stage1 = Signal(16)
@@ -71,35 +67,24 @@ class FloatMultDatapath(Module):
         # 10-2 Nan
         # 11-3 Normal 
         
-        self.comb += [
-            in1_frac.eq( Cat(sink.in1[:10], 1) ),
-            in2_frac.eq( Cat(sink.in2[:10], 1) ),
-
-            in1_exp.eq( sink.in1[10:15] ),
-            in2_exp.eq( sink.in2[10:15] ),
-
-            in1_sign.eq( sink.in1[15] ),
-            in2_sign.eq( sink.in2[15] ),
-        ]
-
         self.sync += [
-            If(in1_exp==0,
-                in1_mant.eq( Cat(in1_frac, 0)),     
-                in1_exp1.eq(in1_exp + 1 )       
+            If(sink.in1[10:15]==0,
+                in1_mant.eq( Cat(sink.in1[:10], 0)),     
+                in1_exp1.eq(sink.in1[10:15] + 1 )       
             ).Else(
-                in1_mant.eq( Cat(in1_frac, 1)),
-                in1_exp1.eq(in1_exp)
+                in1_mant.eq( Cat(sink.in1[:10], 1)),
+                in1_exp1.eq(sink.in1[10:15])
             ),
 
-            If(in2_exp==0,
-                in2_mant.eq( Cat(in2_frac, 0)),     
-                in2_exp1.eq(in2_exp + 1 )       
+            If(sink.in2[10:15]==0,
+                in2_mant.eq( Cat(sink.in2[:10], 0)),     
+                in2_exp1.eq(sink.in2[10:15] + 1 )       
             ).Else(
-                in2_mant.eq( Cat(in2_frac, 1)),
-                in2_exp1.eq(in2_exp)
+                in2_mant.eq( Cat(sink.in2[:10], 1)),
+                in2_exp1.eq(sink.in2[10:15])
             ),  
             out_status1.eq(3),
-            status_stage1.eq(in2_exp)
+            status_stage1.eq(sink.in2[10:15])
         ]
 
         # stage 2
@@ -150,13 +135,12 @@ class FloatMultDatapath(Module):
             out_status4.eq(3),
             If((out_exp3 - one_ptr) < 1,
                 out_exp_adjust.eq(0),
-                out_mult_shift.eq(((out_mult >> (0-out_exp3)) << 1))
+                out_mult_shift.eq(((out_mult3 >> (0-out_exp3)) << 1))
             ).Else(
                 out_exp_adjust.eq(out_exp3 +1 - one_ptr),
-                out_mult_shift.eq(out_mult << one_ptr+1)
+                out_mult_shift.eq(out_mult3 << one_ptr+1)
             ),
 
-            status_stage4.eq(status_stage3)
         ]
 
         # stage 5
@@ -208,7 +192,7 @@ class FloatMultRGB(PipelinedActor, Module):
             PipelinedActor.__init__(self, self.datapath.latency)
             self.comb += self.datapath.ce.eq(self.pipe_ce)
             self.comb += getattr(self.datapath.sink, "in1").eq(getattr(sink, name + "f"))
-            self.comb += getattr(self.datapath.sink, "in2").eq(15360)
+            self.comb += getattr(self.datapath.sink, "in2").eq(15360) # 0.5
             self.comb += getattr(source, name + "f").eq(getattr(self.datapath.source, "out"))
 
         self.latency = self.datapath.latency

@@ -176,11 +176,14 @@ class RAWImage:
 
     def open(self):
 
-        v1 = 0
-        v2 = 0.6346
-        print ("Mult out" , v1+v2)
-        print( "Mult bin", bin(float2binint(v1+v2))[2:].zfill(16) )
-        a, b = ([float2binint(v1)]*5,[float2binint(v2)]*5)
+
+        l1 = range(256)
+        a = [float2binint(float(x)/256) for x in l1]        
+#        a = [float2binint(float(1)/256) , float2binint(float(3)/256) , float2binint(float(7)/256)]
+        b = [float2binint(0.0)]*256
+
+        print ("Mult out" , float(4)/256)
+        print( "Mult bin", bin(float2binint(float(4)/256))[2:].zfill(16) )
         self.set_mult_in(a, b)
 
     def set_mult_in(self, a, b):
@@ -198,21 +201,24 @@ class RAWImage:
             data |= (self.b[i] & 0xffff) << 0
             self.data.append(data)
         q = bin(data)[2:].zfill(32)
-        print(  q[:16]  )
-        print(  q[16:32]  )
         return self.data
 
     def unpack_mult_in(self):
         self.c = []
         for data in self.data:
             self.c.append((data >> 0) & 0xffff)
-        print(bin(self.c[1])[2:].zfill(16) )
-        print(binint2float(self.c[1]))
+        print("Output starts here")
+        for i in range(len(self.c)):
+            print(bin(self.c[i])[2:].zfill(16) )
+            print(256*binint2float(self.c[i]))
+            print()
+            print(" ")
+
         return self.c
 
 
 def float2binint(f):
-    x = np.float16(f).view('H')
+    x = int(np.float16(f).view('H'))
     return x
 
 

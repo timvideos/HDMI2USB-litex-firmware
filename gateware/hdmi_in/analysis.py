@@ -132,44 +132,28 @@ class FrameExtraction(Module, AutoCSR):
         self._overflow = CSR()
 
         ###
+        ###
 
         de_r = Signal()
         self.sync.pix += de_r.eq(self.de)
 
-        rgb2rgb16f = RGB2RGB16f()
-        self.submodules += RenameClockDomains(rgb2rgb16f, "pix")
-        rgb16f2rgb = RGB16f2RGB()
-        self.submodules += RenameClockDomains(rgb16f2rgb, "pix")
         rgb2ycbcr = RGB2YCbCr()
         self.submodules += RenameClockDomains(rgb2ycbcr, "pix")
-
-        floatmult = FloatMultRGB()
-        self.submodules += RenameClockDomains(floatmult, "pix")
-
-        floatadd = FloatAddRGB()
-        self.submodules += RenameClockDomains(floatadd, "pix")
-
         chroma_downsampler = YCbCr444to422()
         self.submodules += RenameClockDomains(chroma_downsampler, "pix")
-
         self.comb += [
-            rgb2rgb16f.sink.stb.eq(self.valid_i),
-            rgb2rgb16f.sink.sop.eq(self.de & ~de_r),
-            rgb2rgb16f.sink.r.eq(self.r),
-            rgb2rgb16f.sink.g.eq(self.g),
-            rgb2rgb16f.sink.b.eq(self.b),
-            Record.connect(rgb2rgb16f.source, floatmult.sink),
-            Record.connect(floatmult.source, floatadd.sink),
-            Record.connect(floatadd.source, rgb16f2rgb.sink),
-            Record.connect(rgb16f2rgb.source, rgb2ycbcr.sink),
+            rgb2ycbcr.sink.stb.eq(self.valid_i),
+            rgb2ycbcr.sink.sop.eq(self.de & ~de_r),
+            rgb2ycbcr.sink.r.eq(self.r),
+            rgb2ycbcr.sink.g.eq(self.g),
+            rgb2ycbcr.sink.b.eq(self.b),
             Record.connect(rgb2ycbcr.source, chroma_downsampler.sink),
             chroma_downsampler.source.ack.eq(1)
         ]
-
         # XXX need clean up
         de = self.de
         vsync = self.vsync
-        for i in range(rgb2rgb16f.latency + rgb16f2rgb.latency + floatmult.latency + floatadd.latency + rgb2ycbcr.latency + chroma_downsampler.latency):
+        for i in range(rgb2ycbcr.latency + chroma_downsampler.latency):
             next_de = Signal()
             next_vsync = Signal()
             self.sync.pix += [

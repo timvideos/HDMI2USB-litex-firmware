@@ -10,6 +10,10 @@ from gateware.hdmi_out import hdmi
 from gateware.csc.ycbcr2rgb import YCbCr2RGB
 from gateware.csc.ycbcr422to444 import YCbCr422to444
 from gateware.csc.ymodulator import YModulator
+from gateware.csc.rgb2rgb16f import RGB2RGB16f
+from gateware.csc.rgb16f2rgb import RGB16f2RGB
+from gateware.float_arithmetic.floatmult import FloatMultRGB
+from gateware.float_arithmetic.floatadd import FloatAddRGB
 
 class _FIFO(Module):
     def __init__(self, pack_factor):
@@ -226,9 +230,37 @@ class Driver(Module, AutoCSR):
 
         ycbcr2rgb = YCbCr2RGB()
         self.submodules += RenameClockDomains(ycbcr2rgb, "pix")
+        rgb2rgb16f = RGB2RGB16f()
+        self.submodules += RenameClockDomains(rgb2rgb16f, "pix")
+        rgb16f2rgb = RGB16f2RGB()
+        self.submodules += RenameClockDomains(rgb16f2rgb, "pix")
+
+        self.submodules.floatmult = FloatMultRGB()
+        self.submodules += RenameClockDomains(self.floatmult, "pix")
+
+        self.submodules.floatadd = FloatAddRGB()
+        self.submodules += RenameClockDomains(self.floatadd, "pix")
+
         self.comb += [
             Record.connect(chroma_upsampler.source, ycbcr2rgb.sink),
-            ycbcr2rgb.source.ack.eq(1)
+            Record.connect(ycbcr2rgb.source, rgb2rgb16f.sink),
+            Record.connect(rgb2rgb16f.source, self.floatmult.sink),
+#            Record.connect(self.floatmult.source, self.floatadd.sink),
+            self.floatadd.sink.r1.eq(self.floatmult.source.payload.rf),
+            self.floatadd.sink.g1.eq(self.floatmult.source.payload.gf),
+            self.floatadd.sink.b1.eq(self.floatmult.source.payload.bf),
+
+            self.floatadd.sink.r2.eq(0),
+            self.floatadd.sink.g2.eq(0),
+            self.floatadd.sink.b2.eq(0),
+
+            self.floatadd.sink.stb.eq(1),
+            self.floatadd.sink.sop.eq(0),
+
+            # Other input for floatadd setup in opsis_video.py
+
+            Record.connect(self.floatadd.source, rgb16f2rgb.sink),  
+            rgb16f2rgb.source.ack.eq(1)
         ]
 
         # XXX need clean up
@@ -236,7 +268,13 @@ class Driver(Module, AutoCSR):
         hsync = fifo.pix_hsync
         vsync = fifo.pix_vsync
         for i in range(chroma_upsampler.latency +
-        	           ycbcr2rgb.latency):
+        	           ycbcr2rgb.latency +
+                       rgb2rgb16f.latency +
+                       self.floatmult.latency +
+                       self.floatadd.latency +
+                       rgb16f2rgb.latency
+                       ):
+
             next_de = Signal()
             next_vsync = Signal()
             next_hsync = Signal()
@@ -254,7 +292,7 @@ class Driver(Module, AutoCSR):
             self.hdmi_phy.hsync.eq(hsync),
             self.hdmi_phy.vsync.eq(vsync),
             self.hdmi_phy.de.eq(de),
-            self.hdmi_phy.r.eq(ycbcr2rgb.source.r),
-            self.hdmi_phy.g.eq(ycbcr2rgb.source.g),
-            self.hdmi_phy.b.eq(ycbcr2rgb.source.b)
+            self.hdmi_phy.r.eq(rgb16f2rgb.source.r),
+            self.hdmi_phy.g.eq(rgb16f2rgb.source.g),
+            self.hdmi_phy.b.eq(rgb16f2rgb.source.b)
         ]
