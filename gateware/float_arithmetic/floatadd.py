@@ -206,10 +206,9 @@ class FloatAdd(PipelinedActor, Module):
 
 class FloatAddRGB(PipelinedActor, Module):
     def __init__(self, dw=16):
-        self.sink = sink = Sink(EndpointDescription(addin_layout(dw), packetized=True))
+        self.sink1 = sink1 = Sink(EndpointDescription(rgb16f_layout(dw), packetized=True))
+        self.sink2 = sink2 = Sink(EndpointDescription(rgb16f_layout(dw), packetized=True))
         self.source = source = Source(EndpointDescription(rgb16f_layout(dw), packetized=True))
-#        self.sink = sink = Sink(EndpointDescription(rgb16f_layout(dw), packetized=True))
-#        self.source = source = Source(EndpointDescription(rgb16f_layout(dw), packetized=True))
 
         # # #
 
@@ -217,10 +216,9 @@ class FloatAddRGB(PipelinedActor, Module):
             self.submodules.datapath = FloatAddDatapath(dw)
             PipelinedActor.__init__(self, self.datapath.latency)
             self.comb += self.datapath.ce.eq(self.pipe_ce)
-            self.comb += getattr(self.datapath.sink, "in1").eq(getattr(sink, name + "1"))
-            self.comb += getattr(self.datapath.sink, "in2").eq(getattr(sink, name + "2"))
-#            self.comb += getattr(self.datapath.sink, "in2").eq(0) # 0.0
-            self.comb += getattr(source, name + "f").eq(getattr(self.datapath.source, "out"))
+            self.comb += self.datapath.sink.in1.eq(getattr(sink1, name + "f"))
+            self.comb += self.datapath.sink.in2.eq(getattr(sink2, name + "f"))
+            self.comb += getattr(source, name + "f").eq(self.datapath.source.out)
 
         self.latency = self.datapath.latency
 

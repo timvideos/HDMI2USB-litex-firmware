@@ -245,17 +245,19 @@ class Driver(Module, AutoCSR):
             Record.connect(chroma_upsampler.source, ycbcr2rgb.sink),
             Record.connect(ycbcr2rgb.source, rgb2rgb16f.sink),
             Record.connect(rgb2rgb16f.source, self.floatmult.sink),
-#            Record.connect(self.floatmult.source, self.floatadd.sink),
-            self.floatadd.sink.r1.eq(self.floatmult.source.payload.rf),
-            self.floatadd.sink.g1.eq(self.floatmult.source.payload.gf),
-            self.floatadd.sink.b1.eq(self.floatmult.source.payload.bf),
+            Record.connect(self.floatmult.source, self.floatadd.sink1),
+            Record.connect(self.floatmult.source, self.floatadd.sink1),
 
-            self.floatadd.sink.r2.eq(0),
-            self.floatadd.sink.g2.eq(0),
-            self.floatadd.sink.b2.eq(0),
+#            self.floatadd.sink.r1.eq(self.floatmult.source.rf),
+#            self.floatadd.sink.g1.eq(self.floatmult.source.gf),
+#            self.floatadd.sink.b1.eq(self.floatmult.source.bf),
 
-            self.floatadd.sink.stb.eq(1),
-            self.floatadd.sink.sop.eq(0),
+#            self.floatadd.sink.r2.eq(0),
+#            self.floatadd.sink.g2.eq(0),
+#            self.floatadd.sink.b2.eq(0),
+
+#            self.floatadd.sink.stb.eq(1),
+#            self.floatadd.sink.sop.eq(0),
 
             # Other input for floatadd setup in opsis_video.py
 
