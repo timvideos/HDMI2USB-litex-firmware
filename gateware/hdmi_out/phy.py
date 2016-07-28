@@ -245,8 +245,21 @@ class Driver(Module, AutoCSR):
             Record.connect(chroma_upsampler.source, ycbcr2rgb.sink),
             Record.connect(ycbcr2rgb.source, rgb2rgb16f.sink),
             Record.connect(rgb2rgb16f.source, self.floatmult.sink),
-            Record.connect(self.floatmult.source, self.floatadd.sink1),
-            Record.connect(self.floatmult.source, self.floatadd.sink1),
+#            Record.connect(self.floatmult.source, self.floatadd.sink),
+
+#            self.floatadd.sink.r1.eq(self.floatmult.source.rf),
+            self.floatadd.sink.g1.eq(self.floatmult.source.gf),
+            self.floatadd.sink.b1.eq(self.floatmult.source.bf),
+            self.floatadd.sink.r2.eq(self.floatmult.source.rf),
+            self.floatadd.sink.g2.eq(self.floatmult.source.gf),
+            self.floatadd.sink.b2.eq(self.floatmult.source.bf),
+            self.floatadd.sink.stb.eq(self.floatmult.source.stb),
+            self.floatmult.source.ack.eq(self.floatadd.sink.ack),
+            self.floatadd.sink.sop.eq(self.floatmult.source.sop),
+            self.floatadd.sink.eop.eq(self.floatmult.source.eop),
+
+#            Record.connect(self.floatmult.source, self.floatadd.sink1),
+#            Record.connect(self.floatmult.source, self.floatadd.sink2),
 
 #            self.floatadd.sink.r1.eq(self.floatmult.source.rf),
 #            self.floatadd.sink.g1.eq(self.floatmult.source.gf),

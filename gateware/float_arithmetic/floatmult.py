@@ -191,8 +191,8 @@ class FloatMultRGB(PipelinedActor, Module):
             self.submodules.datapath = FloatMultDatapath(dw)
             PipelinedActor.__init__(self, self.datapath.latency)
             self.comb += self.datapath.ce.eq(self.pipe_ce)
-            self.comb += getattr(self.datapath.sink, "in1").eq(getattr(sink, name + "f"))
-            self.comb += getattr(self.datapath.sink, "in2").eq(14336) # 0.5
-            self.comb += getattr(source, name + "f").eq(getattr(self.datapath.source, "out"))
+            self.comb += self.datapath.sink.in1.eq(getattr(sink, name + "f"))
+            self.comb += self.datapath.sink.in2.eq(15360) # 1.0
+            self.comb += getattr(source, name + "f").eq(self.datapath.source.out)
 
         self.latency = self.datapath.latency
