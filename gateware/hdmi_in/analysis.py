@@ -9,6 +9,10 @@ from gateware.hdmi_in.common import channel_layout
 
 from gateware.csc.rgb2ycbcr import RGB2YCbCr
 from gateware.csc.ycbcr444to422 import YCbCr444to422
+from gateware.csc.rgb2rgb16f import RGB2RGB16f
+from gateware.csc.rgb16f2rgb import RGB16f2RGB
+from gateware.float_arithmetic.floatmult import FloatMultRGB
+from gateware.float_arithmetic.floatadd import FloatAddRGB
 
 class SyncPolarity(Module):
     def __init__(self):
@@ -127,6 +131,7 @@ class FrameExtraction(Module, AutoCSR):
 
         self._overflow = CSR()
 
+        ###
         ###
 
         de_r = Signal()

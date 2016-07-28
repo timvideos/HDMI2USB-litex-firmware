@@ -43,6 +43,16 @@ def CreateVideoMixerSoC(base):
                 self.sdram.crossbar.get_master(),
                 self.hdmi_out0.driver.clocking)
     
+            # Video Mixer Equation Implemented
+
+#           self.hdmi_out0.driver.floatadd.sink.r2.eq(self.hdmi_out1.driver.floatmult.source.rf)
+#           self.hdmi_out0.driver.floatadd.sink.g2.eq(self.hdmi_out1.driver.floatmult.source.gf)
+#           self.hdmi_out0.driver.floatadd.sink.b2.eq(self.hdmi_out1.driver.floatmult.source.bf)
+
+#           self.hdmi_out1.driver.floatadd.sink.r2.eq(self.hdmi_out0.driver.floatmult.source.rf)
+#           self.hdmi_out1.driver.floatadd.sink.g2.eq(self.hdmi_out0.driver.floatmult.source.gf)
+#           self.hdmi_out1.driver.floatadd.sink.b2.eq(self.hdmi_out0.driver.floatmult.source.bf)
+
             # all PLL_ADV are used: router needs help...
             platform.add_platform_command("""INST PLL_ADV LOC=PLL_ADV_X0Y0;""")
             # FIXME: Fix the HDMI out so this can be removed.
