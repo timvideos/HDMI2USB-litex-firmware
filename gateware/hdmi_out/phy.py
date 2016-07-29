@@ -228,6 +228,10 @@ class Driver(Module, AutoCSR):
           chroma_upsampler.sink.cb_cr.eq(fifo.pix_cb_cr)
         ]
 
+        self.mult_r = CSRStorage(16, reset=14336) # 0.5
+        self.mult_g = CSRStorage(16, reset=14336)
+        self.mult_b = CSRStorage(16, reset=14336)
+
         ycbcr2rgb = YCbCr2RGB()
         self.submodules += RenameClockDomains(ycbcr2rgb, "pix")
         rgb2rgb16f = RGB2RGB16f()
@@ -244,19 +248,39 @@ class Driver(Module, AutoCSR):
         self.comb += [
             Record.connect(chroma_upsampler.source, ycbcr2rgb.sink),
             Record.connect(ycbcr2rgb.source, rgb2rgb16f.sink),
-            Record.connect(rgb2rgb16f.source, self.floatmult.sink),
+
+#           Record.connect(rgb2rgb16f.source, self.floatmult.sink),
+
+#           Connect floatmult sink (input) to rgb2rgb16f sourec (output)
+            
+            self.floatmult.sink.r1.eq(rgb2rgb16f.source.rf),
+            self.floatmult.sink.g1.eq(rgb2rgb16f.source.gf),
+            self.floatmult.sink.b1.eq(rgb2rgb16f.source.bf),
+
+            self.floatmult.sink.r2.eq(self.mult_r.storage),
+            self.floatmult.sink.g2.eq(self.mult_g.storage),
+            self.floatmult.sink.b2.eq(self.mult_b.storage),
+
+            self.floatmult.sink.stb.eq(rgb2rgb16f.source.stb),
+            rgb2rgb16f.source.ack.eq(self.floatmult.sink.ack),
+            self.floatmult.sink.sop.eq(rgb2rgb16f.source.sop),
+            self.floatmult.sink.eop.eq(rgb2rgb16f.source.eop),
+
 #            Record.connect(self.floatmult.source, self.floatadd.sink),
+#           Connect floatadd sink (input) to floatmult source (output) 
 
 #            self.floatadd.sink.r1.eq(self.floatmult.source.rf),
-            self.floatadd.sink.g1.eq(self.floatmult.source.gf),
-            self.floatadd.sink.b1.eq(self.floatmult.source.bf),
-            self.floatadd.sink.r2.eq(self.floatmult.source.rf),
-            self.floatadd.sink.g2.eq(self.floatmult.source.gf),
-            self.floatadd.sink.b2.eq(self.floatmult.source.bf),
-            self.floatadd.sink.stb.eq(self.floatmult.source.stb),
-            self.floatmult.source.ack.eq(self.floatadd.sink.ack),
-            self.floatadd.sink.sop.eq(self.floatmult.source.sop),
-            self.floatadd.sink.eop.eq(self.floatmult.source.eop),
+#            self.floatadd.sink.g1.eq(self.floatmult.source.gf),
+#            self.floatadd.sink.b1.eq(self.floatmult.source.bf),
+
+#            self.floatadd.sink.r2.eq(self.floatmult.source.rf),
+#            self.floatadd.sink.g2.eq(self.floatmult.source.gf),
+#            self.floatadd.sink.b2.eq(self.floatmult.source.bf),
+
+#            self.floatadd.sink.stb.eq(self.floatmult.source.stb),
+#            self.floatmult.source.ack.eq(self.floatadd.sink.ack),
+#            self.floatadd.sink.sop.eq(self.floatmult.source.sop),
+#            self.floatadd.sink.eop.eq(self.floatmult.source.eop),
 
 #            Record.connect(self.floatmult.source, self.floatadd.sink1),
 #            Record.connect(self.floatmult.source, self.floatadd.sink2),

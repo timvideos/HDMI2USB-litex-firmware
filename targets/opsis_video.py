@@ -44,14 +44,33 @@ def CreateVideoMixerSoC(base):
                 self.hdmi_out0.driver.clocking)
     
             # Video Mixer Equation Implemented
+            self.comb += [
 
-#           self.hdmi_out0.driver.floatadd.sink.r2.eq(self.hdmi_out1.driver.floatmult.source.rf)
-#           self.hdmi_out0.driver.floatadd.sink.g2.eq(self.hdmi_out1.driver.floatmult.source.gf)
-#           self.hdmi_out0.driver.floatadd.sink.b2.eq(self.hdmi_out1.driver.floatmult.source.bf)
+                self.hdmi_out0.driver.floatadd.sink.b1.eq(self.hdmi_out0.driver.floatmult.source.bf),
+                self.hdmi_out0.driver.floatadd.sink.g1.eq(self.hdmi_out0.driver.floatmult.source.gf),
+                self.hdmi_out0.driver.floatadd.sink.r1.eq(self.hdmi_out0.driver.floatmult.source.rf),
+                self.hdmi_out0.driver.floatadd.sink.b2.eq(self.hdmi_out1.driver.floatmult.source.bf),
+                self.hdmi_out0.driver.floatadd.sink.g2.eq(self.hdmi_out1.driver.floatmult.source.gf),
+                self.hdmi_out0.driver.floatadd.sink.r2.eq(self.hdmi_out1.driver.floatmult.source.rf),
+                
+                self.hdmi_out1.driver.floatadd.sink.b1.eq(self.hdmi_out0.driver.floatmult.source.bf),
+                self.hdmi_out1.driver.floatadd.sink.g1.eq(self.hdmi_out0.driver.floatmult.source.gf),
+                self.hdmi_out1.driver.floatadd.sink.r1.eq(self.hdmi_out0.driver.floatmult.source.rf),
+                self.hdmi_out1.driver.floatadd.sink.b2.eq(self.hdmi_out1.driver.floatmult.source.bf),
+                self.hdmi_out1.driver.floatadd.sink.g2.eq(self.hdmi_out1.driver.floatmult.source.gf),
+                self.hdmi_out1.driver.floatadd.sink.r2.eq(self.hdmi_out1.driver.floatmult.source.rf),
 
-#           self.hdmi_out1.driver.floatadd.sink.r2.eq(self.hdmi_out0.driver.floatmult.source.rf)
-#           self.hdmi_out1.driver.floatadd.sink.g2.eq(self.hdmi_out0.driver.floatmult.source.gf)
-#           self.hdmi_out1.driver.floatadd.sink.b2.eq(self.hdmi_out0.driver.floatmult.source.bf)
+                self.hdmi_out0.driver.floatadd.sink.stb.eq(self.hdmi_out0.driver.floatmult.source.stb & self.hdmi_out1.driver.floatmult.source.stb ),
+                self.hdmi_out0.driver.floatadd.sink.sop.eq(self.hdmi_out0.driver.floatmult.source.sop & self.hdmi_out1.driver.floatmult.source.sop ),
+                self.hdmi_out0.driver.floatadd.sink.eop.eq(self.hdmi_out0.driver.floatmult.source.eop & self.hdmi_out1.driver.floatmult.source.eop ),
+                
+                self.hdmi_out1.driver.floatadd.sink.stb.eq(self.hdmi_out0.driver.floatmult.source.stb & self.hdmi_out1.driver.floatmult.source.stb ),
+                self.hdmi_out1.driver.floatadd.sink.sop.eq(self.hdmi_out0.driver.floatmult.source.sop & self.hdmi_out1.driver.floatmult.source.sop ),
+                self.hdmi_out1.driver.floatadd.sink.eop.eq(self.hdmi_out0.driver.floatmult.source.eop & self.hdmi_out1.driver.floatmult.source.eop ),
+
+                self.hdmi_out0.driver.floatmult.source.ack.eq(self.hdmi_out0.driver.floatadd.sink.ack & self.hdmi_out0.driver.floatadd.sink.stb),
+                self.hdmi_out1.driver.floatmult.source.ack.eq(self.hdmi_out0.driver.floatadd.sink.ack & self.hdmi_out0.driver.floatadd.sink.stb),
+            ]
 
             # all PLL_ADV are used: router needs help...
             platform.add_platform_command("""INST PLL_ADV LOC=PLL_ADV_X0Y0;""")

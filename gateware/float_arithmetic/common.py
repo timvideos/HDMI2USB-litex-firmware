@@ -12,5 +12,6 @@ def rgb16f_layout(dw):
 def rgb_layout(dw):
     return [("r", dw), ("g", dw), ("b", dw)]
 
-def addin_layout(dw):
+def floatin_layout(dw):
     return [("r1", dw), ("g1", dw), ("b1", dw), ("r2", dw), ("g2", dw), ("b2", dw)]
+

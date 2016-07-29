@@ -18,6 +18,7 @@
 #include "hdmi_out1.h"
 #include "fx2.h"
 #include "version.h"
+#include "mix.h"
 
 int main(void)
 {
@@ -62,6 +63,7 @@ int main(void)
 #endif
 	ci_prompt();
 	while(1) {
+//		mult_service();
 		processor_service();
 		ci_service();
 

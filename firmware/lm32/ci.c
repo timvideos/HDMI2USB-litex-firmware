@@ -8,6 +8,7 @@
 #include <generated/sdram_phy.h>
 #include <time.h>
 
+#include "mix.h"
 #include "config.h"
 #include "fx2.h"
 #include "hdmi_in0.h"
@@ -61,6 +62,16 @@ static void help_output0(void)
 	puts("  output0 on                     - enable output0");
 	puts("  output0 off                    - disable output0");
 }
+
+static void help_output0_mult_factor(void)
+{
+	puts("output0 multfactor (alias: 'm0')");
+	puts("  on                             - enable fade at output0");
+	puts("  off                            - disable fade at output0");
+	puts("  val0                           - mask values at mixer input0");
+	puts("  val1                           - mask values at mixer input1");
+}
+
 #endif
 
 #ifdef CSR_HDMI_OUT1_BASE
@@ -125,6 +136,8 @@ static void help(void)
 	puts("");
 #ifdef CSR_HDMI_OUT0_BASE
 	help_output0();
+	puts("");
+	help_output0_mult_factor();
 	puts("");
 #endif
 #ifdef CSR_HDMI_OUT1_BASE
@@ -505,7 +518,6 @@ static char *get_token(char **str)
 	return d;
 }
 
-
 void ci_prompt(void)
 {
 	printf("HDMI2USB>");
@@ -648,20 +660,50 @@ void ci_service(void)
 	}
 #endif
 
-	else if((strcmp(token, "floatmult") == 0) || (strcmp(token, "f") == 0)) {
+	else if((strcmp(token, "mix_mult") == 0) || (strcmp(token, "m0") == 0)) {
 		token = get_token(&str);
-//		if(strcmp(token, "in1") == 0){
-//			floatmult_float_in1_write(atoi(get_token(&str)));
-//			printf(" Float Mult in1 = %d\n", floatmult_float_in1_read());
-//		}	
-//		else if(strcmp(token, "in2") == 0){
-//			floatmult_float_in2_write(atoi(get_token(&str)));
-//			printf(" Float Mult in2 = %d\n", floatmult_float_in2_read());
-//		}
-//		else if(strcmp(token, "out") == 0)
-//			printf(" Float Mult out = %d\n", floatmult_float_out_read() );
-//		else
-			help_floatmult();
+
+		if(strcmp(token, "on") == 0){
+			mix_status = true ;	
+			printf("Current Mix Status: %d\n" , mix_status );
+		}	
+		else if (strcmp(token, "off") == 0){
+			mix_status = false ;	
+			printf("Current Mix Status: %d\n" , mix_status );
+		}
+		else if (strcmp(token, "mask") == 0){
+			printf("mask value : %d\n" , atoi(token));
+			printf("mult_bar test : %d\n" , mult_bar[5]);
+			printf("mult_bar0 value : %d\n" , mult_bar[atoi(token)]);
+			printf("mult_bar1 value : %d\n" , mult_bar[19-atoi(token)]);
+			hdmi_out0_driver_mult_r_write(mult_bar[atoi(token)]);	
+			hdmi_out0_driver_mult_g_write(mult_bar[atoi(token)]);	
+			hdmi_out0_driver_mult_b_write(mult_bar[atoi(token)]);	
+			hdmi_out1_driver_mult_r_write(mult_bar[19-atoi(token)]);	
+			hdmi_out1_driver_mult_g_write(mult_bar[19-atoi(token)]);	
+			hdmi_out1_driver_mult_b_write(mult_bar[19-atoi(token)]);	
+			printf("HDMI_OUT0 mult r = %d\n", hdmi_out0_driver_mult_r_read());
+			printf("HDMI_OUT0 mult g = %d\n", hdmi_out0_driver_mult_g_read());
+			printf("HDMI_OUT0 mult b = %d\n", hdmi_out0_driver_mult_b_read());
+			printf("HDMI_OUT1 mult r = %d\n", hdmi_out1_driver_mult_r_read());
+			printf("HDMI_OUT1 mult g = %d\n", hdmi_out1_driver_mult_g_read());
+			printf("HDMI_OUT1 mult b = %d\n", hdmi_out1_driver_mult_b_read());
+		}
+
+		else if(strcmp(token, "val0") == 0){
+			printf("HDMI_OUT0 mult r = %d\n", hdmi_out0_driver_mult_r_read());
+			printf("HDMI_OUT0 mult g = %d\n", hdmi_out0_driver_mult_g_read());
+			printf("HDMI_OUT0 mult b = %d\n", hdmi_out0_driver_mult_b_read());
+		}	
+		else if(strcmp(token, "val1") == 0){
+			printf("HDMI_OUT1 mult r = %d\n", hdmi_out1_driver_mult_r_read());
+			printf("HDMI_OUT1 mult g = %d\n", hdmi_out1_driver_mult_g_read());
+			printf("HDMI_OUT1 mult b = %d\n", hdmi_out1_driver_mult_b_read());
+		}	
+		else {
+			help_output0_mult_factor();
+		}
+
 	}
 
 	else if((strcmp(token, "status") == 0) || (strcmp(token, "s") == 0)) {
@@ -784,4 +826,5 @@ void ci_service(void)
 	}
 
 	ci_prompt();
+
 }

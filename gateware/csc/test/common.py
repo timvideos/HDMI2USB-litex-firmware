@@ -254,6 +254,7 @@ class RAWImage:
             self.r.append((data >> 16) & 0xff)
             self.g.append((data >> 8) & 0xff)
             self.b.append((data >> 0) & 0xff)
+        print(self.r[0])
         return self.r, self.g, self.b
 
 

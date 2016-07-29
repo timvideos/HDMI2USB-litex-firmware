@@ -176,14 +176,11 @@ class RAWImage:
 
     def open(self):
 
-
-        l1 = range(256)
-        a = [float2binint(float(x)/256) for x in l1]        
+        a = [15360]*256 
 #        a = [float2binint(float(1)/256) , float2binint(float(3)/256) , float2binint(float(7)/256)]
-        b = [float2binint(0.0)]*256
+#        b = [float2binint(0.0)]*256
+        b = [float2binint(float(x)/256) for x in range(256)]        
 
-        print ("Mult out" , float(4)/256)
-        print( "Mult bin", bin(float2binint(float(4)/256))[2:].zfill(16) )
         self.set_mult_in(a, b)
 
     def set_mult_in(self, a, b):
@@ -209,10 +206,8 @@ class RAWImage:
             self.c.append((data >> 0) & 0xffff)
         print("Output starts here")
         for i in range(len(self.c)):
-            print(bin(self.c[i])[2:].zfill(16) )
-            print(256*binint2float(self.c[i]))
-            print()
-            print(" ")
+            print(bin(self.c[i])[2:6].zfill(5) )
+#            print(binint2float(self.c[i]))
 
         return self.c
 

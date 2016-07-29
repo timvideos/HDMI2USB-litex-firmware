@@ -206,7 +206,7 @@ class FloatAdd(PipelinedActor, Module):
 
 class FloatAddRGB(PipelinedActor, Module):
     def __init__(self, dw=16):
-        self.sink = sink = Sink(EndpointDescription(addin_layout(dw), packetized=True))
+        self.sink = sink = Sink(EndpointDescription(floatin_layout(dw), packetized=True))
 #        self.sink2 = sink2 = Sink(EndpointDescription(rgb16f_layout(dw), packetized=True))
         self.source = source = Source(EndpointDescription(rgb16f_layout(dw), packetized=True))
 

@@ -35,7 +35,7 @@ class PIXF2PIXDatapath(Module):
         # Correct exponent offset for shifting later
         frac = Signal(11)
         exp = Signal(5)
-        exp_offset = Signal(5)
+        exp_offset = Signal((6,True))
 		
         self.sync += [
         
@@ -48,7 +48,11 @@ class PIXF2PIXDatapath(Module):
         # Right shift frac by exp_offset
         # Most significant 8 bits of frac assigned to uint8 pix 
         self.sync += [
-            source.pix.eq( (frac >> exp_offset)[3:]),
+        If(exp_offset<0,
+            source.pix.eq(255)
+        ).Else(
+            source.pix.eq((frac >> exp_offset)[3:]),
+        )
         ]
 
 

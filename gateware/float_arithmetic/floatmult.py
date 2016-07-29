@@ -180,9 +180,9 @@ class FloatMult(PipelinedActor, Module, AutoCSR):
 #        ]
 
 
-class FloatMultRGB(PipelinedActor, Module):
+class FloatMultRGB(PipelinedActor, Module, AutoCSR):
     def __init__(self, dw=16):
-        self.sink = sink = Sink(EndpointDescription(rgb16f_layout(dw), packetized=True))
+        self.sink = sink = Sink(EndpointDescription(floatin_layout(dw), packetized=True))
         self.source = source = Source(EndpointDescription(rgb16f_layout(dw), packetized=True))
 
         # # #
@@ -191,8 +191,10 @@ class FloatMultRGB(PipelinedActor, Module):
             self.submodules.datapath = FloatMultDatapath(dw)
             PipelinedActor.__init__(self, self.datapath.latency)
             self.comb += self.datapath.ce.eq(self.pipe_ce)
-            self.comb += self.datapath.sink.in1.eq(getattr(sink, name + "f"))
-            self.comb += self.datapath.sink.in2.eq(15360) # 1.0
+            self.comb += self.datapath.sink.in1.eq(getattr(sink, name + "1"))
+#            self.comb += self.datapath.sink.in2.eq(0)
+            self.comb += self.datapath.sink.in2.eq(getattr(sink, name + "2"))
             self.comb += getattr(source, name + "f").eq(self.datapath.source.out)
 
         self.latency = self.datapath.latency
+
