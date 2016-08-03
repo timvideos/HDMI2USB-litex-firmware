@@ -208,18 +208,23 @@ class _Clocking(Module, AutoCSR):
                                   i_C1=~ClockSignal("pix"),
                                   i_CE=1, i_D0=1, i_D1=0,
                                   i_R=0, i_S=0)
+
         self.specials += Instance("OBUFDS", i_I=hdmi_clk_se,
                                   o_O=pads.clk_p, o_OB=pads.clk_n)
 
+#        self.specials += Instance("OBUFDS", i_I=hdmi_clk_se,
+#                                  o_O=pads1.clk_p, o_OB=pads1.clk_n)
+
 
 class Driver(Module, AutoCSR):
-    def __init__(self, pack_factor, pads, external_clocking):
+    def __init__(self, pack_factor, pads0, pads1, external_clocking):
         fifo = _FIFO(pack_factor)
         self.submodules += fifo
         self.phy = fifo.phy
         self.busy = fifo.busy
 
-        self.submodules.clocking = _Clocking(pads, external_clocking)
+        self.submodules.clocking = _Clocking(pads0, external_clocking)
+        self.submodules.clocking1 = _Clocking(pads1, self.clocking)
 
         de_r = Signal()
         self.sync.pix += de_r.eq(fifo.pix_de)
@@ -304,6 +309,7 @@ class Driver(Module, AutoCSR):
             self.floatmult1.sink.sop.eq(rgb2rgb16f1.source.sop),
             self.floatmult1.sink.eop.eq(rgb2rgb16f1.source.eop),
 
+
             # Mult output of both inputs now connected
             self.floatadd0.sink.r1.eq(self.floatmult0.source.rf),
             self.floatadd0.sink.g1.eq(self.floatmult0.source.gf),
@@ -312,23 +318,12 @@ class Driver(Module, AutoCSR):
             self.floatadd0.sink.g2.eq(self.floatmult1.source.gf),
             self.floatadd0.sink.b2.eq(self.floatmult1.source.bf),
 
-            self.floatadd1.sink.r1.eq(self.floatmult0.source.rf),
-            self.floatadd1.sink.g1.eq(self.floatmult0.source.gf),
-            self.floatadd1.sink.b1.eq(self.floatmult0.source.bf),
-            self.floatadd1.sink.r2.eq(self.floatmult1.source.rf),
-            self.floatadd1.sink.g2.eq(self.floatmult1.source.gf),
-            self.floatadd1.sink.b2.eq(self.floatmult1.source.bf),
-
             self.floatadd0.sink.stb.eq(self.floatmult0.source.stb & self.floatmult1.source.stb ),
             self.floatadd0.sink.sop.eq(self.floatmult0.source.sop & self.floatmult1.source.sop ),
             self.floatadd0.sink.eop.eq(self.floatmult0.source.eop & self.floatmult1.source.eop ),
-
-            self.floatadd1.sink.stb.eq(self.floatmult0.source.stb & self.floatmult1.source.stb ),
-            self.floatadd1.sink.sop.eq(self.floatmult0.source.sop & self.floatmult1.source.sop ),
-            self.floatadd1.sink.eop.eq(self.floatmult0.source.eop & self.floatmult1.source.eop ),
                 
             self.floatmult0.source.ack.eq(self.floatadd0.sink.ack & self.floatadd0.sink.stb),
-            self.floatmult1.source.ack.eq(self.floatadd1.sink.ack & self.floatadd1.sink.stb),
+            self.floatmult1.source.ack.eq(self.floatadd0.sink.ack & self.floatadd0.sink.stb),
 
 #            self.floatadd.sink.r2.eq(self.floatmult.source.rf),
 #            self.floatadd.sink.g2.eq(self.floatmult.source.gf),
@@ -356,9 +351,7 @@ class Driver(Module, AutoCSR):
             # Other input for floatadd setup in opsis_video.py
 
             Record.connect(self.floatadd0.source, rgb16f2rgb0.sink),  
-            Record.connect(self.floatadd1.source, rgb16f2rgb1.sink),  
             rgb16f2rgb0.source.ack.eq(1),
-            rgb16f2rgb1.source.ack.eq(1)
         ]
 
         # XXX need clean up
@@ -385,22 +378,23 @@ class Driver(Module, AutoCSR):
             vsync = next_vsync
             hsync = next_hsync
 
-        self.submodules.hdmi_phy0 = hdmi.PHY(self.clocking.serdesstrobe, pads)
-#        self.submodules.hdmi_phy1 = hdmi.PHY(self.clocking.serdesstrobe, pads)
+        self.submodules.hdmi_phy0 = hdmi.PHY(self.clocking.serdesstrobe, pads0)
+        self.submodules.hdmi_phy1 = hdmi.PHY(self.clocking1.serdesstrobe, pads1)
 
         self.comb += [
             self.hdmi_phy0.hsync.eq(hsync),
             self.hdmi_phy0.vsync.eq(vsync),
             self.hdmi_phy0.de.eq(de),
 
-#            self.hdmi_phy1.hsync.eq(hsync),
-#            self.hdmi_phy1.vsync.eq(vsync),
-#            self.hdmi_phy1.de.eq(de),
+            self.hdmi_phy1.hsync.eq(hsync),
+            self.hdmi_phy1.vsync.eq(vsync),
+            self.hdmi_phy1.de.eq(de),
 
             self.hdmi_phy0.r.eq(rgb16f2rgb0.source.r),
             self.hdmi_phy0.g.eq(rgb16f2rgb0.source.g),
             self.hdmi_phy0.b.eq(rgb16f2rgb0.source.b),
- #           self.hdmi_phy1.r.eq(rgb16f2rgb1.source.r),
- #           self.hdmi_phy1.g.eq(rgb16f2rgb1.source.g),
- #           self.hdmi_phy1.b.eq(rgb16f2rgb1.source.b)
+
+            self.hdmi_phy1.r.eq(rgb16f2rgb1.source.r),
+            self.hdmi_phy1.g.eq(rgb16f2rgb1.source.g),
+            self.hdmi_phy1.b.eq(rgb16f2rgb1.source.b),
         ]
