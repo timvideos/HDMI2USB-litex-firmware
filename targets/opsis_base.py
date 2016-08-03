@@ -169,7 +169,6 @@ class BaseSoC(SDRAMSoC):
 
         self.submodules.crg = _CRG(platform, clk_freq)
         self.submodules.dna = dna.DNA()
-        self.submodules.floatmult = floatmult.FloatMult()
         self.submodules.git_info = git_info.GitInfo()
         self.submodules.platform_info = platform_info.PlatformInfo("opsis", self.__class__.__name__[:8])
 

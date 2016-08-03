@@ -15,7 +15,6 @@ pixel_layout_s = [
     ("y", bpc)
 ]
 
-
 def pixel_layout(pack_factor):
     return [("p"+str(i), pixel_layout_s) for i in range(pack_factor)]
 
@@ -30,6 +29,7 @@ def phy_layout(pack_factor):
     r = [("hsync", 1), ("vsync", 1), ("de", 1)]
     for i in range(pack_factor):
         r.append(("p"+str(i), phy_layout_s))
+        r.append(("q"+str(i), phy_layout_s))
     return r
 
 
@@ -75,7 +75,8 @@ class VTG(Module):
             ("vsync_end", _vbits),
             ("vscan", _vbits)]
         self.timing = Sink(timing_layout)
-        self.pixels = Sink(pixel_layout(pack_factor))
+        self.pixels0 = Sink(pixel_layout(pack_factor))
+        self.pixels1 = Sink(pixel_layout(pack_factor))
         self.phy = Source(phy_layout(pack_factor))
         self.busy = Signal()
 
@@ -92,11 +93,14 @@ class VTG(Module):
         self.comb += [
             active.eq(hactive & vactive),
             If(active,
-                [getattr(getattr(self.phy.payload, p), c).eq(getattr(getattr(self.pixels.payload, p), c)[skip:])
-                    for p in ["p"+str(i) for i in range(pack_factor)] for c in ["y", "cb_cr"]],
+                [getattr(getattr(self.phy.payload, p_phy), c).eq(getattr(getattr(self.pixels0.payload, p_pixel), c)[skip:])
+                    for p_phy,p_pixel in zip(["p"+str(i) for i in range(pack_factor)], ["p"+str(i) for i in range(pack_factor)]) for c in ["y", "cb_cr"]],
+                [getattr(getattr(self.phy.payload, p_phy), c).eq(getattr(getattr(self.pixels1.payload, p_pixel), c)[skip:])
+                    for p_phy,p_pixel in zip(["q"+str(i) for i in range(pack_factor)], ["p"+str(i) for i in range(pack_factor)]) for c in ["y", "cb_cr"]],
                 self.phy.de.eq(1)
             ),
-            self.pixels.ack.eq(self.phy.ack & active)
+            self.pixels0.ack.eq(self.phy.ack & active),
+            self.pixels1.ack.eq(self.phy.ack & active)
         ]
 
         load_timing = Signal()
@@ -139,7 +143,7 @@ class VTG(Module):
         )
         self.fsm.act("GENERATE",
             self.busy.eq(1),
-            If(~active | self.pixels.stb,
+            If(~active | (self.pixels0.stb & self.pixels1.stb),
                 self.phy.stb.eq(1),
                 If(self.phy.ack, generate_en.eq(1))
             ),

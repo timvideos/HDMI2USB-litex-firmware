@@ -660,7 +660,7 @@ void ci_service(void)
 	}
 #endif
 
-	else if((strcmp(token, "mix_mult") == 0) || (strcmp(token, "m0") == 0)) {
+/*	else if((strcmp(token, "mix_mult") == 0) || (strcmp(token, "m0") == 0)) {
 		token = get_token(&str);
 
 		if(strcmp(token, "on") == 0){
@@ -705,7 +705,7 @@ void ci_service(void)
 		}
 
 	}
-
+*/
 	else if((strcmp(token, "status") == 0) || (strcmp(token, "s") == 0)) {
 		token = get_token(&str);
 		if(strcmp(token, "on") == 0)

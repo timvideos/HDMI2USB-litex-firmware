@@ -42,7 +42,7 @@ unsigned int mult_factor_1 = 15360 ;
 void mult_service(void)
 {
 	static int last_event;
-	static int counter;		
+	static int counter;
 
 //	if (mix_status) {
 		if(elapsed(&last_event, identifier_frequency_read()/FILL_RATE)) {
@@ -53,15 +53,15 @@ void mult_service(void)
 			if(counter >= (FILL_RATE-1)) {
 				counter = 0;
 			}
-//		}
-	}
+		}
+//	}
 
-	hdmi_out0_driver_mult_r_write(mult_factor_0);
+/*	hdmi_out0_driver_mult_r_write(mult_factor_0);
 	hdmi_out0_driver_mult_g_write(mult_factor_0);
 	hdmi_out0_driver_mult_b_write(mult_factor_0);
 
 	hdmi_out1_driver_mult_r_write(mult_factor_1);
 	hdmi_out1_driver_mult_g_write(mult_factor_1);
 	hdmi_out1_driver_mult_b_write(mult_factor_1);
-
+*/
 }
