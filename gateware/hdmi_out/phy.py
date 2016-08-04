@@ -224,7 +224,7 @@ class Driver(Module, AutoCSR):
         self.busy = fifo.busy
 
         self.submodules.clocking  = _Clocking(pads0, external_clocking)
-        self.submodules.clocking1  = _Clocking(pads1, external_clocking)
+#        self.submodules.clocking1  = _Clocking(pads1, self.clocking)
 
         de_r = Signal()
         self.sync.pix += de_r.eq(fifo.pix_de)
@@ -379,7 +379,7 @@ class Driver(Module, AutoCSR):
             hsync = next_hsync
 
         self.submodules.hdmi_phy0 = hdmi.PHY(self.clocking.serdesstrobe, pads0)
-        self.submodules.hdmi_phy1 = hdmi.PHY(self.clocking1.serdesstrobe, pads1)
+        self.submodules.hdmi_phy1 = hdmi.PHY(self.clocking.serdesstrobe, pads1)
 
         self.comb += [
             self.hdmi_phy0.hsync.eq(hsync),
