@@ -89,7 +89,7 @@ TIMESPEC "TSise_sucks7" = FROM "GRPpix0_clk" TO "GRPsys_clk" TIG;
 TIMESPEC "TSise_sucks8" = FROM "GRPsys_clk" TO "GRPpix0_clk" TIG;
 """, 
                 pix0_clk=self.hdmi_out0.driver.clocking.cd_pix.clk,
-#                pix1_clk=self.hdmi_out0.driver.clocking.cd_pix.clk,
+                pix1_clk=self.hdmi_out0.driver.clocking1.cd_pix.clk,
             )
 
             for k, v in sorted(platform.hdmi_infos.items()):
