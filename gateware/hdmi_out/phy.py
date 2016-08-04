@@ -188,7 +188,7 @@ class _Clocking(Module, AutoCSR):
 
         else:
             self.clock_domains.cd_pix = ClockDomain(reset_less=True)
-            self.specials +=  Instance("BUFG", name="hdmi_out_pix_bufg", i_I=external_clocking.pll_clk2, o_O=self.cd_pix.clk)
+            self.specials +=  Instance("BUFG", name="hdmi_out_pix_bufg1", i_I=external_clocking.pll_clk2, o_O=self.cd_pix.clk)
             self.clock_domains.cd_pix2x = ClockDomain(reset_less=True)
             self.clock_domains.cd_pix10x = ClockDomain(reset_less=True)
             self.serdesstrobe = Signal()
@@ -223,8 +223,8 @@ class Driver(Module, AutoCSR):
         self.phy = fifo.phy
         self.busy = fifo.busy
 
-        self.submodules.clocking = _Clocking(pads0, external_clocking)
-        self.submodules.clocking1 = _Clocking(pads1, self.clocking)
+        self.submodules.clocking  = _Clocking(pads0, external_clocking)
+        self.submodules.clocking1  = _Clocking(pads1, external_clocking)
 
         de_r = Signal()
         self.sync.pix += de_r.eq(fifo.pix_de)
@@ -386,15 +386,15 @@ class Driver(Module, AutoCSR):
             self.hdmi_phy0.vsync.eq(vsync),
             self.hdmi_phy0.de.eq(de),
 
-            self.hdmi_phy1.hsync.eq(hsync),
-            self.hdmi_phy1.vsync.eq(vsync),
-            self.hdmi_phy1.de.eq(de),
+#            self.hdmi_phy1.hsync.eq(hsync),
+#            self.hdmi_phy1.vsync.eq(vsync),
+#            self.hdmi_phy1.de.eq(de),
 
             self.hdmi_phy0.r.eq(rgb16f2rgb0.source.r),
             self.hdmi_phy0.g.eq(rgb16f2rgb0.source.g),
             self.hdmi_phy0.b.eq(rgb16f2rgb0.source.b),
 
-            self.hdmi_phy1.r.eq(rgb16f2rgb1.source.r),
-            self.hdmi_phy1.g.eq(rgb16f2rgb1.source.g),
-            self.hdmi_phy1.b.eq(rgb16f2rgb1.source.b),
+#            self.hdmi_phy1.r.eq(rgb16f2rgb1.source.r),
+#            self.hdmi_phy1.g.eq(rgb16f2rgb1.source.g),
+#            self.hdmi_phy1.b.eq(rgb16f2rgb1.source.b),
         ]
