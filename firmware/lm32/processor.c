@@ -508,18 +508,21 @@ void processor_update(void)
 #ifdef CSR_HDMI_OUT0_BASE
 	/*  hdmi_out0 */
 #ifdef CSR_HDMI_IN0_BASE
-	if(processor_hdmi_out0_source == VIDEO_IN_HDMI_IN0)
+	if(processor_hdmi_out0_source == VIDEO_IN_HDMI_IN0) {
 		hdmi_out0_fi_base0_write(hdmi_in0_framebuffer_base(hdmi_in0_fb_index));
-		hdmi_out0_fi_base1_write(hdmi_in0_framebuffer_base(hdmi_in0_fb_index));
+		hdmi_out0_fi_base1_write(pattern_framebuffer_base());
+	}
 #endif
 #ifdef CSR_HDMI_IN1_BASE
-	if(processor_hdmi_out0_source == VIDEO_IN_HDMI_IN1)
-		hdmi_out0_fi_base0_write(hdmi_in1_framebuffer_base(hdmi_in1_fb_index));
+	if(processor_hdmi_out0_source == VIDEO_IN_HDMI_IN1) {
+//		hdmi_out0_fi_base0_write(hdmi_in1_framebuffer_base(hdmi_in1_fb_index));
 		hdmi_out0_fi_base1_write(hdmi_in1_framebuffer_base(hdmi_in1_fb_index));
+	}
 #endif
-	if(processor_hdmi_out0_source == VIDEO_IN_PATTERN)
-		hdmi_out0_fi_base0_write(pattern_framebuffer_base());
-		hdmi_out0_fi_base1_write(pattern_framebuffer_base());
+	if(processor_hdmi_out0_source == VIDEO_IN_PATTERN) {
+//		hdmi_out0_fi_base0_write(pattern_framebuffer_base());
+		hdmi_out0_fi_base1_write(hdmi_in0_framebuffer_base(hdmi_in0_fb_index));
+	}
 #endif
 
 #ifdef CSR_HDMI_OUT1_BASE
@@ -532,8 +535,8 @@ void processor_update(void)
 	if(processor_hdmi_out1_source == VIDEO_IN_HDMI_IN1)
 		hdmi_out1_fi_base0_write(hdmi_in1_framebuffer_base(hdmi_in1_fb_index));
 #endif
-	if(processor_hdmi_out1_source == VIDEO_IN_PATTERN)
-		hdmi_out1_fi_base0_write(pattern_framebuffer_base());
+//	if(processor_hdmi_out1_source == VIDEO_IN_PATTERN)
+//		hdmi_out1_fi_base0_write(pattern_framebuffer_base());
 #endif
 
 #ifdef ENCODER_BASE
@@ -548,8 +551,8 @@ void processor_update(void)
 		encoder_reader_base_write((hdmi_in1_framebuffer_base(hdmi_in1_fb_index)));
 	}
 #endif
-	if(processor_encoder_source == VIDEO_IN_PATTERN)
-		encoder_reader_base_write(pattern_framebuffer_base());
+//	if(processor_encoder_source == VIDEO_IN_PATTERN)
+//		encoder_reader_base_write(pattern_framebuffer_base());
 #endif
 }
 

@@ -147,5 +147,5 @@ class VTG(Module):
                 self.phy.stb.eq(1),
                 If(self.phy.ack, generate_en.eq(1))
             ),
-            If(generate_frame_done,    NextState("GET_TIMING"))
+            If(generate_frame_done, NextState("GET_TIMING"))
         )
