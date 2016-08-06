@@ -134,7 +134,7 @@ class _CRG(Module):
 class FrontPanelGPIO(Module, AutoCSR):
     def __init__(self, platform, clk_freq):
         switches = Signal(1)
-        leds = Signal(2)
+        leds = Signal(3)
 
         self.reset = Signal()
 
@@ -145,7 +145,8 @@ class FrontPanelGPIO(Module, AutoCSR):
         self.comb += [
            switches[0].eq(~platform.request("pwrsw")),
            platform.request("hdled").eq(~leds[0]),
-           platform.request("pwled").eq(~leds[1]),
+           platform.request("pwled", 0).eq(~leds[1]),
+           platform.request("pwled", 1).eq(~leds[2]),
         ]
 
         # generate a reset when power switch is pressed for 5 seconds
