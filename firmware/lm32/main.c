@@ -19,6 +19,8 @@
 #include "fx2.h"
 #include "version.h"
 
+static int led_last_event;
+
 int main(void)
 {
 	irq_setmask(0);
@@ -62,7 +64,7 @@ int main(void)
 #endif
 
 #ifdef CSR_FRONT_PANEL_BASE
-	front_panel_leds_out_write(0x1);
+	front_panel_leds_out_write(0x4);
 #endif
 
 	ci_prompt();
@@ -74,6 +76,11 @@ int main(void)
 		fx2_service(true);
 #endif
 
+#ifdef CSR_FRONT_PANEL_BASE
+		if (elapsed(&led_last_event, identifier_frequency_read())) {
+			front_panel_leds_out_write(front_panel_leds_out_read() ^ 0x1);
+		}
+#endif
 /* XXX FIX DDR conflict between DMA and L2 cache */
 #if 0
 		pattern_service();
