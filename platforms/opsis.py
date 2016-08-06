@@ -8,6 +8,24 @@ from mibuild.xilinx import UrJTAG
 from mibuild.xilinx import iMPACT
 
 _io = [
+    # Connector P14 - Case Switches / LEDs
+    # http://www.intel.com/content/dam/support/us/en/images/motherboards/desktop/sb/img/fp_header.jpg
+    #
+    #         /-       3V3 -- Pin 1 || Pin 2 -- PCIO0 (G7)-\
+    # HD LED -|                     ||                     |- Power LED - LED23
+    #  LED1   \-(J7) PCIO1 -- Pin 3 || Pin 4 -- PCIO2 (H8)-/
+    #         /-       GND -- Pin 5 || Pin 6 -- PCIO3 (F5)-\  (1M pullup VCC1V5)
+    # Rest SW |                     ||                     |- Power Switch - Info
+    #         \-       RST -- Pin 7 || Pin 8 -- GND       -/  (1k pulldown GND)
+    #                               ||
+    #                   NC -- Pin 9 || Pin X -- NC
+    ("hdled", 0, Pins("J7"), IOStandard("LVCMOS15")), # PCIO1 - GPIO Output
+
+    ("pwled", 0, Pins("H8"), IOStandard("LVCMOS15")), # PCIO2 - GPIO Output
+    ("pwled", 1, Pins("G7"), IOStandard("LVCMOS15")), # PCIO0 - GPIO Output
+
+    ("pwrsw", 0, Pins("F5"), IOStandard("LVCMOS15")), # PCIO3 - GPIO Input
+
     ## FXO-HC536R - component U17
     # 100MHz - CMOS Crystal Oscillator
     #NET "clk"                  LOC =   "AB13"       |IOSTANDARD =            None;     #                      (/FPGA_Bank_1_2/USRCLK)
