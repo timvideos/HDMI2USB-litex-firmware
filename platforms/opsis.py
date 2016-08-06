@@ -19,10 +19,10 @@ _io = [
     #         \-       RST -- Pin 7 || Pin 8 -- GND       -/  (1k pulldown GND)
     #                               ||
     #                   NC -- Pin 9 || Pin X -- NC
-    ("hdled", 0, Pins("J7"), IOStandard("LVCMOS15")), # PCIO1 - GPIO Output
+    ("hdled", 0, Pins("J7"), IOStandard("LVCMOS15"), Drive(16)), # PCIO1 - GPIO Output
 
-    ("pwled", 0, Pins("H8"), IOStandard("LVCMOS15")), # PCIO2 - GPIO Output
-    ("pwled", 1, Pins("G7"), IOStandard("LVCMOS15")), # PCIO0 - GPIO Output
+    ("pwled", 0, Pins("H8"), IOStandard("LVCMOS15"), Drive(16)), # PCIO2 - GPIO Output
+    ("pwled", 1, Pins("G7"), IOStandard("LVCMOS15"), Drive(16)), # PCIO0 - GPIO Output
 
     ("pwrsw", 0, Pins("F5"), IOStandard("LVCMOS15")), # PCIO3 - GPIO Input
 
