@@ -60,6 +60,11 @@ int main(void)
 	encoder_enable(1);
 	processor_update();
 #endif
+
+#ifdef CSR_FRONT_PANEL_BASE
+	front_panel_leds_out_write(0x1);
+#endif
+
 	ci_prompt();
 	while(1) {
 		processor_service();
