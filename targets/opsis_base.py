@@ -2,11 +2,13 @@
 import struct
 from fractions import Fraction
 
-from migen.fhdl.std import *
-from migen.fhdl.specials import Keep
-from migen.genlib.resetsync import AsyncResetSynchronizer
+from migen.bank.description import AutoCSR
 from migen.bus import wishbone
+from migen.fhdl.specials import Keep
+from migen.fhdl.std import *
+from migen.genlib.misc import WaitTimer
 from migen.genlib.record import Record
+from migen.genlib.resetsync import AsyncResetSynchronizer
 
 from misoclib.com import gpio
 from misoclib.mem.flash import spiflash
@@ -43,6 +45,8 @@ class _CRG(Module):
 
         self.clk8x_wr_strb = Signal()
         self.clk8x_rd_strb = Signal()
+
+        self.reset = Signal()
 
         f0 = 100*1000000
         clk100 = platform.request("clk100")
@@ -82,7 +86,7 @@ class _CRG(Module):
         )
         self.specials += Instance("BUFG", i_I=pll[4], o_O=self.cd_sys2x.clk)
         self.specials += Instance("BUFG", i_I=pll[5], o_O=self.cd_sys.clk)
-        reset = ~platform.request("cpu_reset")
+        reset = ~platform.request("cpu_reset") | self.reset
         self.clock_domains.cd_por = ClockDomain()
         por = Signal(max=1 << 11, reset=(1 << 11) - 1)
         self.sync.por += If(por != 0, por.eq(por - 1))
@@ -127,10 +131,37 @@ class _CRG(Module):
         self.specials += AsyncResetSynchronizer(self.cd_encoder, self.cd_sys.rst)
 
 
+class FrontPanelGPIO(Module, AutoCSR):
+    def __init__(self, platform, clk_freq):
+        switches = Signal(1)
+        leds = Signal(3)
+
+        self.reset = Signal()
+
+        # # #
+
+        self.submodules.switches = gpio.GPIOIn(switches)
+        self.submodules.leds = gpio.GPIOOut(leds)
+        self.comb += [
+           switches[0].eq(~platform.request("pwrsw")),
+           platform.request("hdled").eq(~leds[0]),
+           platform.request("pwled", 0).eq(~leds[1]),
+           platform.request("pwled", 1).eq(~leds[2]),
+        ]
+
+        # generate a reset when power switch is pressed for 5 seconds
+        self.submodules.reset_timer = WaitTimer(clk_freq*5)
+        self.comb += [
+            self.reset_timer.wait.eq(switches[0]),
+            self.reset.eq(self.reset_timer.done)
+        ]
+
+
 class UARTSharedPads:
     def __init__(self):
         self.tx = Signal()
         self.rx = Signal()
+
 
 class BaseSoC(SDRAMSoC):
     default_platform = "opsis"
@@ -145,6 +176,7 @@ class BaseSoC(SDRAMSoC):
         "fx2_hack",
 #        "opsis_eeprom_i2c",
         "tofe_eeprom_i2c",
+        "front_panel",
     )
     csr_map_update(SDRAMSoC.csr_map, csr_peripherals)
 
@@ -170,6 +202,9 @@ class BaseSoC(SDRAMSoC):
         self.submodules.git_info = git_info.GitInfo()
         self.submodules.platform_info = platform_info.PlatformInfo("opsis", self.__class__.__name__[:8])
 
+        # front panel (ATX)
+        self.submodules.front_panel = FrontPanelGPIO(platform, clk_freq)
+        self.comb += self.crg.reset.eq(self.front_panel.reset)
 
         fx2_uart_pads = platform.request("serial_fx2")
         sd_card_uart_pads = platform.request("serial_sd_card")

@@ -106,6 +106,10 @@ static void help_debug(void)
 #ifdef CSR_FX2_RESET_OUT_ADDR
 	puts("  debug fx2_reboot firmware      - reboot the FX2 USB IC into firmware");
 #endif
+#ifdef CSR_FRONT_PANEL_BASE
+	puts("  debug frontpanel leds          - change the front panel LED status");
+	puts("  debug frontpanel switches      - read the front panel switch status");
+#endif
 }
 
 static void help(void)
@@ -785,7 +789,20 @@ void ci_service(void)
 #endif
 			if(found == 0)
 				printf("%s port has no EDID capabilities\r\n", token);
-		} else
+		}
+#ifdef CSR_FRONT_PANEL_BASE
+		else if(strcmp(token, "frontpanel") == 0) {
+			token = get_token(&str);
+			if(strcmp(token, "leds") == 0) {
+				token = get_token(&str);
+				front_panel_leds_out_write(atoi(token));
+			}
+			else if(strcmp(token, "switches") == 0) {
+				printf("%X\r\n", (int)front_panel_switches_in_read());
+			}
+		}
+#endif
+		else
 			help_debug();
 	} 
 	else {
