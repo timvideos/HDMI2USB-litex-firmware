@@ -7,34 +7,46 @@ class DataCapture(Module, AutoCSR):
     """
     Migen module for capturing VGA data from AD9984A on VGA expansion board.
 
-    `__init__` args:
-        pads : vga pads from atlys platform
+    Parameters
+    ----------
+    pads : Record
+        Vga pads from atlys platform
 
-    output signals:
-        r,g, b : each 8-bit wide signals for 3 color components of every pixel
-        vsync  : vsync signal. Generally used to sof signal.
-        de     : data enable signal. Asserted means visible/active region is being
-                 captured at that moment
-        valid  : data is valid. This should go high when AD9984A has been properly
-                 initialized.
+    Attributes
+    ----------
+    r,g, b : Signal(8-bit), out
+             Each 8-bit wide signals for 3 color components of every pixel
+    vsync  : Signal(1), out
+             VSYNC signal. Generally used to signal sof
+    de     : Signal 1-bit, out
+             Data enable signal. Asserted means visible/active region is being
+             captured at that moment
+    valid  : Signal(1), out
+             Data is valid. This should go high when AD9984A has been properly
+             initialized.
 
-    clock domains:
-        pix : all synchronous code in this module work on `pix` clock domain.
-              No need to use RenameClockDomain
+    Clock Domains
+    -------------
+    pix : pixel clock domain
+        All synchronous code in this module work on `pix` clock domain.
+        No need to use RenameClockDomain
 
-    Working: This module runs two counters, `counterX` and `counterY`. `counterX` is reset at
-             the rising edge of HSYNC signal from AD9984A, and then is counted up at every
-             rising edge of pixel clock. `counterY` is reset at rising edge of VSYNC signal
-             and is counted up at every HSYNC occurrence. `de` signal is asserted whenever
-             data captured is from visible region. VGA timing constants decide visible region.
+    Working
+    -------
+    This module runs two counters, `counterX` and `counterY`. `counterX` is reset at
+    the rising edge of HSYNC signal from AD9984A, and then is counted up at every
+    rising edge of pixel clock. `counterY` is reset at rising edge of VSYNC signal
+    and is counted up at every HSYNC occurrence. `de` signal is asserted whenever
+    data captured is from visible region. VGA timing constants decide visible region.
 
-    TODO:
-        1. Make the timing values, which are currently constants, to configurable via
-           CSRs.
-        2. `valid` signal should be proper. Currently it just driven high always.
-           But when support for configurable resolutions is added, we should wait for
-           AD9984A IC's PLL to get locked and initialization to finish properly before
-           driving this signal high.
+    TODO
+    ----
+    1. Make the timing values, which are currently constants, to configurable via
+       CSRs.
+    2. `valid` signal should be proper. Currently it just driven high always.
+       But when support for configurable resolutions is added, we should wait for
+       AD9984A IC's PLL to get locked and initialization to finish properly before
+       driving this signal high.
 
     """
 
