@@ -1,14 +1,18 @@
+from gateware.i2c import I2C
+from gateware.vga import VGAIn
 from gateware.hdmi_in import HDMIIn
 from gateware.hdmi_out import HDMIOut
 
 from targets.common import *
-from targets.atlys_base import default_subtarget as BaseSoC
+from targets.atlys_base import BaseSoC as BaseSoC
 
 
 def CreateVideoMixerSoC(base):
 
     class CustomVideoMixerSoC(base):
         csr_peripherals = (
+            "vga_in",
+            "vga_i2c",
             "hdmi_out0",
             "hdmi_out1",
             "hdmi_in0",
@@ -19,6 +23,7 @@ def CreateVideoMixerSoC(base):
         csr_map_update(base.csr_map, csr_peripherals)
     
         interrupt_map = {
+            "vga_in"  : 2,
             "hdmi_in0": 3,
             "hdmi_in1": 4,
         }
@@ -26,6 +31,12 @@ def CreateVideoMixerSoC(base):
     
         def __init__(self, platform, **kwargs):
             base.__init__(self, platform, **kwargs)
+            vga_pads = platform.request("vga", 0)
+            self.submodules.vga_i2c = I2C(vga_pads)
+            self.submodules.vga_in = VGAIn(
+                vga_pads,
+                self.sdram.crossbar.get_master(),
+                fifo_depth=1024)
             self.submodules.hdmi_in0 = HDMIIn(
                 platform.request("hdmi_in", 0),
                 self.sdram.crossbar.get_master(),

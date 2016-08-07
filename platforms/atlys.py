@@ -484,6 +484,23 @@ _io_vccb2_3v3 = [
         #Subsignal("scl", Pins("C13"), IOStandard("LVCMOS33")),
         #Subsignal("sda", Pins("A13"), IOStandard("LVCMOS33")),
     ),
+
+    ("vga", 0,
+        Subsignal("red", Pins("U10 R10 U11 M10 P11 N10 T12 R11 M11 V13")),
+        Subsignal("green", Pins("N8 T8 M8 R8 V10 V11 N9 V12 T11 N11")),
+        Subsignal("blue", Pins("N6 R7 V6 P8 T6 N7 V8 V7 U7 U8")),
+        Subsignal("vsout", Pins("U16")),
+        Subsignal("hsout", Pins("U15")),
+        Subsignal("sogout", Pins("U13")),
+        Subsignal("oe_filed", Pins("V16")),
+        Subsignal("pwrdwn", Pins("V15")),
+        Subsignal("clamp", Pins("T7")),
+        Subsignal("coast", Pins("P7")),
+        Subsignal("datack", Pins("T10")),
+        Subsignal("sda", Pins("U5")),
+        Subsignal("scl", Pins("V5")),
+        IOStandard("LVCMOS33"), Misc("SLEW=FAST")
+    ),
 ]
 
 _io_vccb2_2v5 = []
