@@ -42,11 +42,11 @@ int main(void)
 
 	// Set HDMI Output 0 to be pattern
 #ifdef CSR_HDMI_OUT0_BASE
-	processor_set_hdmi_out0_source(VIDEO_IN_HDMI_IN0);
+	processor_set_hdmi_out0_source(VIDEO_IN_PATTERN);
 #endif
 	// Set HDMI Output 1 to be pattern
 #ifdef CSR_HDMI_OUT1_BASE
-	processor_set_hdmi_out1_source(VIDEO_IN_HDMI_IN1);
+	processor_set_hdmi_out1_source(VIDEO_IN_PATTERN);
 #endif
 	processor_update();
 

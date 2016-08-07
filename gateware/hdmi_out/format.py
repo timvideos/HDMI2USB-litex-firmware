@@ -18,6 +18,13 @@ pixel_layout_s = [
 def pixel_layout(pack_factor):
     return [("p"+str(i), pixel_layout_s) for i in range(pack_factor)]
 
+def pixel_layout_c(pack_factor):
+    r = []
+    for i in range(pack_factor):
+        r.append(("p"+str(i), pixel_layout_s))
+        r.append(("q"+str(i), pixel_layout_s))
+    return r
+
 bpc_phy = 8
 phy_layout_s = [
     ("cb_cr", bpc_phy),
@@ -61,6 +68,24 @@ class FrameInitiator(spi.SingleGenerator):
     def dma_subr(self, i=0):
         return ["length", "base"+str(i)]
 
+class ConCat(Module):
+    def __init__(self, pack_factor):
+        self.pix0 = Sink(pixel_layout(pack_factor))
+        self.pix1 = Sink(pixel_layout(pack_factor))
+        self.pix = Source(pixel_layout_c(pack_factor))
+        self.busy = Signal()
+
+        self.comb += [
+                [getattr(getattr(self.pix.payload, p_phy), c).eq(getattr(getattr(self.pix0.payload, p_pixel), c))
+                    for p_phy,p_pixel in zip(["p"+str(i) for i in range(pack_factor)], ["p"+str(i) for i in range(pack_factor)]) for c in ["y", "cb_cr"]],
+                [getattr(getattr(self.pix.payload, p_phy), c).eq(getattr(getattr(self.pix1.payload, p_pixel), c))
+                    for p_phy,p_pixel in zip(["q"+str(i) for i in range(pack_factor)], ["p"+str(i) for i in range(pack_factor)]) for c in ["y", "cb_cr"]],
+            self.pix0.ack.eq(self.pix.ack & self.pix.stb),
+            self.pix1.ack.eq(self.pix.ack & self.pix.stb),
+            self.pix.stb.eq(self.pix0.stb & self.pix1.stb),
+            self.busy.eq(0)
+        ]
+
 
 class VTG(Module):
     def __init__(self, pack_factor):
@@ -75,8 +100,7 @@ class VTG(Module):
             ("vsync_end", _vbits),
             ("vscan", _vbits)]
         self.timing = Sink(timing_layout)
-        self.pixels0 = Sink(pixel_layout(pack_factor))
-        self.pixels1 = Sink(pixel_layout(pack_factor))
+        self.pixels = Sink(pixel_layout_c(pack_factor))
         self.phy = Source(phy_layout(pack_factor))
         self.busy = Signal()
 
@@ -93,14 +117,13 @@ class VTG(Module):
         self.comb += [
             active.eq(hactive & vactive),
             If(active,
-                [getattr(getattr(self.phy.payload, p_phy), c).eq(getattr(getattr(self.pixels0.payload, p_pixel), c)[skip:])
+                [getattr(getattr(self.phy.payload, p_phy), c).eq(getattr(getattr(self.pixels.payload, p_pixel), c)[skip:])
                     for p_phy,p_pixel in zip(["p"+str(i) for i in range(pack_factor)], ["p"+str(i) for i in range(pack_factor)]) for c in ["y", "cb_cr"]],
-                [getattr(getattr(self.phy.payload, p_phy), c).eq(getattr(getattr(self.pixels1.payload, p_pixel), c)[skip:])
-                    for p_phy,p_pixel in zip(["q"+str(i) for i in range(pack_factor)], ["p"+str(i) for i in range(pack_factor)]) for c in ["y", "cb_cr"]],
+                [getattr(getattr(self.phy.payload, p_phy), c).eq(getattr(getattr(self.pixels.payload, p_pixel), c)[skip:])
+                    for p_phy,p_pixel in zip(["q"+str(i) for i in range(pack_factor)], ["q"+str(i) for i in range(pack_factor)]) for c in ["y", "cb_cr"]],
                 self.phy.de.eq(1)
             ),
-            self.pixels0.ack.eq(self.phy.ack & active),
-            self.pixels1.ack.eq(self.phy.ack & active)
+            self.pixels.ack.eq(self.phy.ack & active),
         ]
 
         load_timing = Signal()
@@ -143,7 +166,7 @@ class VTG(Module):
         )
         self.fsm.act("GENERATE",
             self.busy.eq(1),
-            If(~active | (self.pixels0.stb & self.pixels1.stb),
+            If(~active | (self.pixels.stb),
                 self.phy.stb.eq(1),
                 If(self.phy.ack, generate_en.eq(1))
             ),
