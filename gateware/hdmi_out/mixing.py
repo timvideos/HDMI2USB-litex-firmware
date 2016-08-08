@@ -7,6 +7,7 @@ class MixerBlock(Module):
         self.sink = Sink(layout_in)
         self.source = Source(layout_out)
         self.busy = Signal()
+        i = 0
 
         ###
 
@@ -16,5 +17,4 @@ class MixerBlock(Module):
             self.sink.ack.eq(self.source.ack & self.source.stb)
         ]
 
-        i = 4
-		self.comb += [self.source.payload.n0.eq(getattr(self.sink, "n"+i))]
+        self.comb += [self.source.payload.eq(getattr(self.sink.payload, "n"+str(i)))]
