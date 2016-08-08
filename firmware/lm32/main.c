@@ -63,7 +63,7 @@ int main(void)
 #endif
 	ci_prompt();
 	while(1) {
-//		mult_service();
+		mult_service();
 		processor_service();
 		ci_service();
 

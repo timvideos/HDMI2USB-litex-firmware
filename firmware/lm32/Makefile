@@ -18,6 +18,7 @@ OBJECTS=isr.o \
         processor.o \
         hdmi_in0.o \
         hdmi_in1.o \
+        mix.o\
         hdmi_out0.o \
         hdmi_out1.o \
         pattern.o \

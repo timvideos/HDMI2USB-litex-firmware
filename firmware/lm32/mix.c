@@ -32,12 +32,11 @@ static const unsigned int mult_bar[20] = {
 	15053 ,
 	15155 ,
 	15258 
+
+	
 };
 
 #define FILL_RATE 20 			// In Hertz, double the standard frame rate
-
-unsigned int mult_factor_0 = 0;
-unsigned int mult_factor_1 = 15360 ;
 
 void mult_service(void)
 {
@@ -47,21 +46,13 @@ void mult_service(void)
 //	if (mix_status) {
 		if(elapsed(&last_event, identifier_frequency_read()/FILL_RATE)) {
 			counter = counter+1;
-			mult_factor_0 = mult_bar[counter];
-			mult_factor_1 = mult_bar[20-1-counter];
-
 			if(counter >= (FILL_RATE-1)) {
 				counter = 0;
 			}
 		}
 //	}
+	
+	hdmi_out0_driver_mult_factor0_write(mult_bar[counter]);
+	hdmi_out0_driver_mult_factor1_write(mult_bar[20-1-counter]);
 
-/*	hdmi_out0_driver_mult_r_write(mult_factor_0);
-	hdmi_out0_driver_mult_g_write(mult_factor_0);
-	hdmi_out0_driver_mult_b_write(mult_factor_0);
-
-	hdmi_out1_driver_mult_r_write(mult_factor_1);
-	hdmi_out1_driver_mult_g_write(mult_factor_1);
-	hdmi_out1_driver_mult_b_write(mult_factor_1);
-*/
 }

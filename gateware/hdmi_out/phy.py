@@ -246,9 +246,8 @@ class Driver(Module, AutoCSR):
           chroma_upsampler1.sink.cb_cr.eq(fifo.pix_cb_cr_1)
         ]
 
-        self.mult_r = CSRStorage(16, reset=13312) # 0.25
-        self.mult_g = CSRStorage(16, reset=13312)
-        self.mult_b = CSRStorage(16, reset=13312)
+        self.mult_factor0 = CSRStorage(16, reset=14336) # 0.25
+        self.mult_factor1 = CSRStorage(16, reset=14336) # 0.25
 
         ycbcr2rgb0 = YCbCr2RGB()
         ycbcr2rgb1 = YCbCr2RGB()
@@ -284,9 +283,9 @@ class Driver(Module, AutoCSR):
             floatmult0.sink.r1.eq(rgb2rgb16f0.source.rf),
             floatmult0.sink.g1.eq(rgb2rgb16f0.source.gf),
             floatmult0.sink.b1.eq(rgb2rgb16f0.source.bf),
-            floatmult0.sink.r2.eq(self.mult_r.storage),
-            floatmult0.sink.g2.eq(self.mult_g.storage),
-            floatmult0.sink.b2.eq(self.mult_b.storage),
+            floatmult0.sink.r2.eq(self.mult_factor0.storage),
+            floatmult0.sink.g2.eq(self.mult_factor0.storage),
+            floatmult0.sink.b2.eq(self.mult_factor0.storage),
             floatmult0.sink.stb.eq(rgb2rgb16f0.source.stb),
             rgb2rgb16f0.source.ack.eq(floatmult0.sink.ack),
             floatmult0.sink.sop.eq(rgb2rgb16f0.source.sop),
@@ -299,9 +298,9 @@ class Driver(Module, AutoCSR):
             floatmult1.sink.r1.eq(rgb2rgb16f1.source.rf),
             floatmult1.sink.g1.eq(rgb2rgb16f1.source.gf),
             floatmult1.sink.b1.eq(rgb2rgb16f1.source.bf),
-            floatmult1.sink.r2.eq(self.mult_r.storage),
-            floatmult1.sink.g2.eq(self.mult_g.storage),
-            floatmult1.sink.b2.eq(self.mult_b.storage),
+            floatmult1.sink.r2.eq(self.mult_factor1.storage),
+            floatmult1.sink.g2.eq(self.mult_factor1.storage),
+            floatmult1.sink.b2.eq(self.mult_factor1.storage),
 
             floatmult1.sink.stb.eq(rgb2rgb16f1.source.stb),
             rgb2rgb16f1.source.ack.eq(floatmult1.sink.ack),
@@ -321,29 +320,6 @@ class Driver(Module, AutoCSR):
             floatadd0.sink.eop.eq(floatmult0.source.eop & floatmult1.source.eop ),
             floatmult0.source.ack.eq(floatadd0.sink.ack & floatadd0.sink.stb),
             floatmult1.source.ack.eq(floatadd0.sink.ack & floatadd0.sink.stb),
-
-#            self.floatadd.sink.r2.eq(self.floatmult.source.rf),
-#            self.floatadd.sink.g2.eq(self.floatmult.source.gf),
-#            self.floatadd.sink.b2.eq(self.floatmult.source.bf),
-
-#            self.floatadd.sink.stb.eq(self.floatmult.source.stb),
-#            self.floatmult.source.ack.eq(self.floatadd.sink.ack),
-#            self.floatadd.sink.sop.eq(self.floatmult.source.sop),
-#            self.floatadd.sink.eop.eq(self.floatmult.source.eop),
-
-#            Record.connect(self.floatmult.source, self.floatadd.sink1),
-#            Record.connect(self.floatmult.source, self.floatadd.sink2),
-
-#            self.floatadd.sink.r1.eq(self.floatmult.source.rf),
-#            self.floatadd.sink.g1.eq(self.floatmult.source.gf),
-#            self.floatadd.sink.b1.eq(self.floatmult.source.bf),
-
-#            self.floatadd.sink.r2.eq(0),
-#            self.floatadd.sink.g2.eq(0),
-#            self.floatadd.sink.b2.eq(0),
-
-#            self.floatadd.sink.stb.eq(1),
-#            self.floatadd.sink.sop.eq(0),
 
             # Other input for floatadd setup in opsis_video.py
 

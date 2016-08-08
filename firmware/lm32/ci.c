@@ -66,8 +66,8 @@ static void help_output0(void)
 static void help_output0_mult_factor(void)
 {
 	puts("output0 multfactor (alias: 'm0')");
-	puts("  on                             - enable fade at output0");
-	puts("  off                            - disable fade at output0");
+	puts("  set0                           - set mult at input0");
+	puts("  set1                           - set mult at input1");
 	puts("  val0                           - mask values at mixer input0");
 	puts("  val1                           - mask values at mixer input1");
 }
@@ -660,52 +660,35 @@ void ci_service(void)
 	}
 #endif
 
-/*	else if((strcmp(token, "mix_mult") == 0) || (strcmp(token, "m0") == 0)) {
+	else if((strcmp(token, "mix_mult") == 0) || (strcmp(token, "m0") == 0)) {
 		token = get_token(&str);
 
-		if(strcmp(token, "on") == 0){
-			mix_status = true ;	
-			printf("Current Mix Status: %d\n" , mix_status );
-		}	
-		else if (strcmp(token, "off") == 0){
-			mix_status = false ;	
-			printf("Current Mix Status: %d\n" , mix_status );
+		if (strcmp(token, "set0") == 0){
+			hdmi_out0_driver_mult_factor0_write(atoi(get_token(&str)));
+			printf("HDMI_OUT0 mult factor = %d\n", hdmi_out0_driver_mult_factor0_read());
+			printf("HDMI_OUT1 mult factor = %d\n", hdmi_out0_driver_mult_factor1_read());
 		}
-		else if (strcmp(token, "mask") == 0){
-			printf("mask value : %d\n" , atoi(token));
-			printf("mult_bar test : %d\n" , mult_bar[5]);
-			printf("mult_bar0 value : %d\n" , mult_bar[atoi(token)]);
-			printf("mult_bar1 value : %d\n" , mult_bar[19-atoi(token)]);
-			hdmi_out0_driver_mult_r_write(mult_bar[atoi(token)]);	
-			hdmi_out0_driver_mult_g_write(mult_bar[atoi(token)]);	
-			hdmi_out0_driver_mult_b_write(mult_bar[atoi(token)]);	
-			hdmi_out1_driver_mult_r_write(mult_bar[19-atoi(token)]);	
-			hdmi_out1_driver_mult_g_write(mult_bar[19-atoi(token)]);	
-			hdmi_out1_driver_mult_b_write(mult_bar[19-atoi(token)]);	
-			printf("HDMI_OUT0 mult r = %d\n", hdmi_out0_driver_mult_r_read());
-			printf("HDMI_OUT0 mult g = %d\n", hdmi_out0_driver_mult_g_read());
-			printf("HDMI_OUT0 mult b = %d\n", hdmi_out0_driver_mult_b_read());
-			printf("HDMI_OUT1 mult r = %d\n", hdmi_out1_driver_mult_r_read());
-			printf("HDMI_OUT1 mult g = %d\n", hdmi_out1_driver_mult_g_read());
-			printf("HDMI_OUT1 mult b = %d\n", hdmi_out1_driver_mult_b_read());
+
+		else if (strcmp(token, "set1") == 0){
+			hdmi_out0_driver_mult_factor1_write(atoi(get_token(&str)));			
+			printf("HDMI_OUT0 mult factor = %d\n", hdmi_out0_driver_mult_factor0_read());
+			printf("HDMI_OUT1 mult factor = %d\n", hdmi_out0_driver_mult_factor1_read());
 		}
 
 		else if(strcmp(token, "val0") == 0){
-			printf("HDMI_OUT0 mult r = %d\n", hdmi_out0_driver_mult_r_read());
-			printf("HDMI_OUT0 mult g = %d\n", hdmi_out0_driver_mult_g_read());
-			printf("HDMI_OUT0 mult b = %d\n", hdmi_out0_driver_mult_b_read());
+			printf("HDMI_OUT0 mult factor = %d\n", hdmi_out0_driver_mult_factor0_read());
 		}	
+
 		else if(strcmp(token, "val1") == 0){
-			printf("HDMI_OUT1 mult r = %d\n", hdmi_out1_driver_mult_r_read());
-			printf("HDMI_OUT1 mult g = %d\n", hdmi_out1_driver_mult_g_read());
-			printf("HDMI_OUT1 mult b = %d\n", hdmi_out1_driver_mult_b_read());
+			printf("HDMI_OUT1 mult factor = %d\n", hdmi_out0_driver_mult_factor1_read());
 		}	
+
 		else {
 			help_output0_mult_factor();
 		}
 
 	}
-*/
+
 	else if((strcmp(token, "status") == 0) || (strcmp(token, "s") == 0)) {
 		token = get_token(&str);
 		if(strcmp(token, "on") == 0)

@@ -510,7 +510,7 @@ void processor_update(void)
 #ifdef CSR_HDMI_IN0_BASE
 	if(processor_hdmi_out0_source == VIDEO_IN_HDMI_IN0) {
 		hdmi_out0_fi_base0_write(hdmi_in0_framebuffer_base(hdmi_in0_fb_index));
-		hdmi_out0_fi_base1_write(hdmi_in0_framebuffer_base(hdmi_in0_fb_index));
+		hdmi_out0_fi_base1_write(pattern_framebuffer_base());
 	}
 #endif
 #ifdef CSR_HDMI_IN1_BASE
