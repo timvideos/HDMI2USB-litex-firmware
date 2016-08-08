@@ -32,6 +32,7 @@ OBJECTS=isr.o \
         main.o \
         opsis_eeprom.o \
         tofe_eeprom.o \
+		freq.o \
 	version.o \
 	version_data.o \
 

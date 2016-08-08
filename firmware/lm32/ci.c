@@ -22,6 +22,7 @@
 #include "hdmi_out0.h"
 #include "hdmi_out1.h"
 #include "version.h"
+#include "freq.h"
 
 int status_enabled;
 
@@ -97,6 +98,9 @@ static void help_debug(void)
 	puts("  debug ddr                      - show DDR bandwidth");
 	puts("  debug dna                      - show Board's DNA");
 	puts("  debug edid                     - dump monitor EDID");
+#ifdef CSR_FREQ_COUNT_BASE
+	puts("  debug freq                     - get input frequencies");
+#endif
 #ifdef CSR_OPSIS_EEPROM_I2C_W_ADDR
 	puts("  debug opsis_eeprom             - dump Opsis Info EEPROM");
 #endif
@@ -160,6 +164,7 @@ static void status_disable(void)
 }
 
 static void debug_ddr(void);
+static void debug_freq(void);
 
 static void status_print(void)
 {
@@ -225,6 +230,10 @@ static void status_print(void)
 #endif
 	printf("ddr: ");
 	debug_ddr();
+#ifdef CSR_FREQ_COUNT_BASE
+	printf("freq: ");
+	debug_freq();
+#endif
 }
 
 static void status_service(void)
@@ -462,6 +471,13 @@ static void debug_input(unsigned int channels, unsigned int change, unsigned int
 		printf("HDMI Input 1 debug %s\r\n", hdmi_in0_debug ? "on" : "off");
 	}
 #endif
+}
+#endif
+
+#ifdef CSR_FREQ_COUNT_BASE
+static void debug_freq(void)
+{
+	freq_dump();
 }
 #endif
 
@@ -742,6 +758,11 @@ void ci_service(void)
 			debug_ddr();
 		else if(strcmp(token, "dna") == 0)
 			print_board_dna();
+#ifdef CSR_FREQ_COUNT_BASE
+		else if(strcmp(token, "freq") == 0) {
+			debug_freq();
+                }
+#endif
 #ifdef CSR_OPSIS_EEPROM_I2C_W_ADDR
 		else if(strcmp(token, "opsis_eeprom") == 0) {
 			opsis_eeprom_dump();

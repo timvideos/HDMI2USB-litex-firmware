@@ -5,6 +5,9 @@ from migen.fhdl.std import *
 from migen.fhdl.specials import Keep
 from migen.genlib.resetsync import AsyncResetSynchronizer
 from migen.actorlib.fifo import SyncFIFO
+from migen.fhdl.tools import *
+
+from mibuild.generic_platform import *
 
 from misoclib.com.gpio import GPIOOut
 from misoclib.mem.flash import spiflash
@@ -23,6 +26,7 @@ from gateware import dna
 from gateware import firmware
 from gateware import git_info
 from gateware import platform_info
+from gateware import freq_count
 
 from targets.common import *
 
@@ -102,6 +106,7 @@ class BaseSoC(SDRAMSoC):
         "dna",
         "git_info",
         "platform_info",
+        "freq_count",
     )
     csr_map_update(SDRAMSoC.csr_map, csr_peripherals)
 
@@ -137,6 +142,17 @@ class BaseSoC(SDRAMSoC):
         self.add_constant("SPIFLASH_SECTOR_SIZE", platform.spiflash_sector_size)
         self.flash_boot_address = self.mem_map["spiflash"]+platform.gateware_size
         self.register_mem("spiflash", self.mem_map["spiflash"], self.spiflash.bus, size=platform.gateware_size)
+
+        # freq_in = [("freq_in", 0, Pins("A:0"), IOStandard("LVTTL"))]
+        # platform.add_extension(freq_in)
+        # self.clock_domains.cd_inc = ClockDomain(reset_less=True)
+        # self.specials += Instance("BUFG", i_I=platform.request("freq_in"), o_O=self.cd_inc.clk)
+        #
+        # # Only rename source, manually connect dest b/c of Migen decoration rules.
+        # self.submodules.freq_count = ClockDomainsRenamer({"src" : "inc"})(freq_count.FrequencyCounter(clk_freq, 6, 32))
+        #
+        # self.comb += [self.freq_count.core.cd_dest.clk.eq(self.crg.cd_sys.clk)]
+        # self.comb += [self.freq_count.core.cd_dest.rst.eq(self.crg.cd_sys.rst)]
 
 
 class USBSoC(BaseSoC):

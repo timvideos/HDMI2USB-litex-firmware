@@ -170,6 +170,8 @@ class Platform(XilinxPlatform):
 
     def __init__(self, device="xc6slx25", programmer="openocd"):
         XilinxPlatform.__init__(self, device+"-3-ftg256", _io, _connectors)
+        # FPGA AUX is connected to the 3.3V supply
+        self.add_platform_command("""CONFIG VCCAUX="3.3";""")
         self.programmer = programmer
 
     def create_programmer(self):
