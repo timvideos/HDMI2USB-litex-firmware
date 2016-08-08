@@ -10,15 +10,15 @@ class DataCapture(Module, AutoCSR):
     Parameters
     ----------
     pads : Record
-        Vga pads from atlys platform
+        `vga` pads from atlys platform
 
     Attributes
     ----------
-    r,g, b : Signal(8-bit), out
+    r,g, b : Signal(8), out
              Each 8-bit wide signals for 3 color components of every pixel
     vsync  : Signal(1), out
              VSYNC signal. Generally used to signal sof
-    de     : Signal 1-bit, out
+    de     : Signal(1), out
              Data enable signal. Asserted means visible/active region is being
              captured at that moment
     valid  : Signal(1), out
@@ -27,9 +27,9 @@ class DataCapture(Module, AutoCSR):
 
     Clock Domains
     -------------
-    pix : pixel clock domain
+    pix : Pixel clock domain
         All synchronous code in this module work on `pix` clock domain.
-        No need to use RenameClockDomain
+        No need to use RenameClockDomain.
 
     Working
     -------
@@ -41,7 +41,7 @@ class DataCapture(Module, AutoCSR):
 
     TODO
     ----
-    1. Make the timing values, which are currently constants, to configurable via
+    1. Make the timing values, which are currently constants, to be configurable via
        CSRs.
     2. `valid` signal should be proper. Currently it just driven high always.
        But when support for configurable resolutions is added, we should wait for
