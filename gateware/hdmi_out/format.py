@@ -19,6 +19,12 @@ pixel_layout_s = [
 def pixel_layout(pack_factor):
     return [("p"+str(i), pixel_layout_s) for i in range(pack_factor)]
 
+def pixel_layout_c(pack_factor, ndmas):
+    r = []
+    for j in range(ndmas):
+        r.append(("n"+str(j), pixel_layout(pack_factor)))    
+    return r
+
 bpc_phy = 8
 phy_layout_s = [
     ("cb_cr", bpc_phy),
