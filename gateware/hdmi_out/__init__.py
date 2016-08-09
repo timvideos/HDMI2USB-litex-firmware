@@ -12,35 +12,38 @@ from gateware.i2c import I2C
 
 
 class HDMIOut(Module, AutoCSR):
-    def __init__(self, pads, lasmim, lasmim1, ndmas, external_clocking=None):
+    def __init__(self, pads, lasmim, ndmas, external_clocking=None):
         pack_factor = lasmim.dw//bpp
 
         if hasattr(pads, "scl"):
             self.submodules.i2c = I2C(pads)
 
         g = DataFlowGraph()
-        lasmim_list = [lasmim, lasmim1]
+        lasmim_list = [lasmim]
 
         # Define Modules
-        self.pg = PixelGather(lasmim_list, ndmas, pack_factor, g)
-        mixer = MixerBlock(pixel_layout_c(pack_factor, ndmas), pixel_layout(pack_factor))
+        self.fi = FrameInitiator(lasmim_list[0].aw, pack_factor, ndmas)        
+        self.pg = PixelGather(self.fi, lasmim_list, ndmas, pack_factor, g)
+        mixer = MixerBlock(pixel_layout_c(pack_factor, ndmas), pixel_layout(pack_factor), pack_factor)
         vtg = VTG(pack_factor)
         self.driver = Driver(pack_factor, pads, external_clocking)
 
         # Define Connections
-        g.add_connection(self.pg, mixer)
+        g.add_connection(self.pg.combiner, mixer)
+
         g.add_connection(self.pg.fi, vtg, source_subr=self.pg.fi.timing_subr, sink_ep="timing")
         g.add_connection(mixer, vtg, sink_ep="pixels")
         g.add_connection(vtg, self.driver)
+
         self.submodules += CompositeActor(g)
 
-class PixelGather(Module, AutoCSR):
-    def __init__(self, lasmim_list, ndmas, pack_factor, g):
+class PixelGather(Module):
+    def __init__(self, fi, lasmim_list, ndmas, pack_factor, g):
 
         combine_layout = [pixel_layout(pack_factor) for i in range(ndmas)]
 
-        self.fi = FrameInitiator(lasmim_list[0].aw, pack_factor, ndmas)
-        combiner = Combinat(pixel_layout_c(pack_factor, ndmas), combine_layout)
+        self.fi = fi
+        self.combiner = Combinat(pixel_layout_c(pack_factor, ndmas), combine_layout, ndmas)
 
         for i in range(ndmas):
 
@@ -53,17 +56,17 @@ class PixelGather(Module, AutoCSR):
             # Define Connections
             g.add_connection(self.fi, intseq, source_subr=self.fi.dma_subr(i))
             g.add_pipeline(intseq, AbstractActor(plumbing.Buffer), dma_lasmi.Reader(lasmimb), dma_out, cast)
-            g.add_connection(cast, combiner, sink_ep="sink"+str(i))
+            g.add_connection(cast, self.combiner, sink_ep="sink"+str(i))
 
 
 class Combinat(Module):
-    def __init__(self, layout, subrecords):
-        self.source = Source(layout)
+    def __init__(self, layout, subrecords, ndmas):
+        self.source = Source(layout)    # pixel_layout_c
         sinks = []
         for n, r in enumerate(subrecords):
             s = Sink(r)
             setattr(self, "sink"+str(n), s)
-            sinks.append(s)
+            sinks.append(s)             # pixel_layout
         self.busy = Signal()
 
         ###
@@ -72,6 +75,12 @@ class Combinat(Module):
             self.busy.eq(0),
             self.source.stb.eq(optree("&", [sink.stb for sink in sinks]))
         ]
+
         self.comb += [sink.ack.eq(self.source.ack & self.source.stb) for sink in sinks]
-        self.comb += [self.source.payload.eq(sink.payload) for sink in sinks]
         self.comb += [self.source.param.eq(sink.param) for sink in sinks]
+
+        for i in range(ndmas):
+            self.comb += [ getattr(self.source.payload, "n"+str(i) ).eq(sinks[i].payload)]
+#            getattr(self.source.payload, "n"+str(i) )
+#            sinks[i].payload
+
