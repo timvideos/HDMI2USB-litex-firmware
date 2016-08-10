@@ -10,6 +10,11 @@ from gateware.hdmi_out import hdmi
 from gateware.csc.ycbcr2rgb import YCbCr2RGB
 from gateware.csc.ycbcr422to444 import YCbCr422to444
 from gateware.csc.ymodulator import YModulator
+from gateware.csc.rgb2rgb16f import RGB2RGB16f
+from gateware.csc.rgb16f2rgb import RGB16f2RGB
+from gateware.float_arithmetic.floatmult import FloatMultRGB
+from gateware.float_arithmetic.floatadd import FloatAddRGB
+
 
 class _FIFO(Module):
     def __init__(self, pack_factor, ndmas):
@@ -48,8 +53,8 @@ class _FIFO(Module):
         ]
 
         for j in range(ndmas):
-            setattr( self, 'pix_y_n'    +str(j) , Signal(bpc_phy)
-            setattr( self, 'pix_cb_cr_n'+str(j) , Signal(bpc_phy)
+            setattr(self,'pix_y_n'    +str(j) , Signal(bpc_phy))
+            setattr(self,'pix_cb_cr_n'+str(j) , Signal(bpc_phy))
 
             for i in range(pack_factor):
                 pixel = getattr(getattr(fifo.dout, "n"+str(j)), "p"+str(i))
@@ -219,6 +224,10 @@ class Driver(Module, AutoCSR):
         de_r = Signal()
         self.sync.pix += de_r.eq(fifo.pix_de)
 
+        floatmults = []
+        mult_dma = [None]*ndmas
+        mult_dma = self.dm
+
         for n in range(ndmas):
 
             chroma_upsampler = YCbCr422to444()
@@ -226,8 +235,8 @@ class Driver(Module, AutoCSR):
             self.comb += [
               chroma_upsampler.sink.stb.eq(fifo.pix_de),
               chroma_upsampler.sink.sop.eq(fifo.pix_de & ~de_r),
-              chroma_upsampler.sink.y.eq(getattr(fifo, 'pix_y_n'+str(j))),
-              chroma_upsampler.sink.cb_cr.eq(getattr(fifo, 'pix_cb_cr_n'+str(j))),
+              chroma_upsampler.sink.y.eq(getattr(fifo,'pix_y_n'+str(n))),
+              chroma_upsampler.sink.cb_cr.eq(getattr(fifo,'pix_cb_cr_n'+str(n)))
             ]
 
             ycbcr2rgb = YCbCr2RGB()
@@ -241,15 +250,16 @@ class Driver(Module, AutoCSR):
                 Record.connect(ycbcr2rgb.source, rgb2rgb16f.sink),
             ]
 
-
             floatmult = FloatMultRGB()
             self.submodules += RenameClockDomains(floatmult, "pix")            
-            setattr(self, 'mult_dma'+str(n), CSRStorage(16, reset=14336))  # 0.25
+            floatmults.append(floatmult)
+            self.mult_dma[n] = CSRStorage(16, reset=14336)
 
             self.comb += [
                 floatmult.sink.r1.eq(rgb2rgb16f.source.rf),
                 floatmult.sink.g1.eq(rgb2rgb16f.source.gf),
                 floatmult.sink.b1.eq(rgb2rgb16f.source.bf),
+                floatmult.sink.r2.eq(self.mult_dma[n].storage),
                 floatmult.sink.r2.eq(getattr(getattr(self,'mult_dma'+str(n))),'storage'),
                 floatmult.sink.g2.eq(getattr(getattr(self,'mult_dma'+str(n))),'storage'),
                 floatmult.sink.b2.eq(getattr(getattr(self,'mult_dma'+str(n))),'storage'),
@@ -263,10 +273,23 @@ class Driver(Module, AutoCSR):
         self.mix_source1 = CSRStorage(1, reset=1)
 
         floatadd = FloatAddRGB()
-        self.submodules += RenameClockDomains(floatadd0, "pix")
+        self.submodules += RenameClockDomains(floatadd, "pix")
         self.comb += [
 
+            floatadd.sink.r1.eq(floatmult[0].source.rf),
+            floatadd.sink.g1.eq(floatmult[0].source.gf),
+            floatadd.sink.b1.eq(floatmult[0].source.bf),
+            floatadd.sink.r2.eq(floatmult[1].source.rf),
+            floatadd.sink.g2.eq(floatmult[1].source.gf),
+            floatadd.sink.b2.eq(floatmult[1].source.bf),
+
+            floatadd.sink.stb.eq(floatmults[0].source.stb & floatmults[1].source.stb ),
+            floatadd.sink.sop.eq(floatmults[0].source.sop & floatmults[1].source.sop ),
+            floatadd.sink.eop.eq(floatmults[0].source.eop & floatmults[1].source.eop ),
+            floatmults[0].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb),
+            floatmults[1].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb)
         ]
+
 
         rgb16f2rgb = RGB16f2RGB()
         self.submodules += RenameClockDomains(rgb16f2rgb, "pix")
@@ -303,7 +326,3 @@ class Driver(Module, AutoCSR):
             self.hdmi_phy.g.eq(ycbcr2rgb.source.g),
             self.hdmi_phy.b.eq(ycbcr2rgb.source.b)
         ]
-
-class Mixer(Module, AutoCSR):
-    def __init__():
-
