@@ -12,36 +12,35 @@ from gateware.i2c import I2C
 
 
 class HDMIOut(Module, AutoCSR):
-    def __init__(self, pads, lasmim, ndmas, external_clocking=None):
-        pack_factor = lasmim.dw//bpp
+    def __init__(self, pads, dma_crossbar, ndmas=1, external_clocking=None):
 
         if hasattr(pads, "scl"):
             self.submodules.i2c = I2C(pads)
 
+        lasmim_list = [dma_crossbar.get_master() for i in range(ndmas)]
+        pack_factor = lasmim_list[0].dw//bpp
+
         g = DataFlowGraph()
-        lasmim_list = [lasmim]
 
         # Define Modules
-        self.fi = FrameInitiator(lasmim_list[0].aw, pack_factor, ndmas)        
-        self.pg = PixelGather(self.fi, lasmim_list, ndmas, pack_factor, g)
-        mixer = MixerBlock(pixel_layout_c(pack_factor, ndmas), pixel_layout(pack_factor), pack_factor)
-        vtg = VTG(pack_factor)
-        self.driver = Driver(pack_factor, pads, external_clocking)
+        self.fi = FrameInitiator(lasmim_list[0].aw, pack_factor, ndmas)
+        self.pg = PixelGather(self.fi, lasmim_list, pack_factor, ndmas, g)
+
+#        mixer = MixerBlock(pixel_layout_c(pack_factor, ndmas), pixel_layout(pack_factor), pack_factor)
+        vtg = VTG(pack_factor, ndmas)
+        self.driver = Driver(pack_factor, ndmas, pads, external_clocking)
 
         # Define Connections
-        g.add_connection(self.pg.combiner, mixer)
-
+        g.add_connection(self.pg.combiner, vtg , sink_ep='pixels')
         g.add_connection(self.pg.fi, vtg, source_subr=self.pg.fi.timing_subr, sink_ep="timing")
-        g.add_connection(mixer, vtg, sink_ep="pixels")
         g.add_connection(vtg, self.driver)
 
         self.submodules += CompositeActor(g)
 
 class PixelGather(Module):
-    def __init__(self, fi, lasmim_list, ndmas, pack_factor, g):
+    def __init__(self, fi, lasmim_list, pack_factor, ndmas, g):
 
         combine_layout = [pixel_layout(pack_factor) for i in range(ndmas)]
-
         self.fi = fi
         self.combiner = Combinat(pixel_layout_c(pack_factor, ndmas), combine_layout, ndmas)
 
@@ -81,6 +80,4 @@ class Combinat(Module):
 
         for i in range(ndmas):
             self.comb += [ getattr(self.source.payload, "n"+str(i) ).eq(sinks[i].payload)]
-#            getattr(self.source.payload, "n"+str(i) )
-#            sinks[i].payload
 

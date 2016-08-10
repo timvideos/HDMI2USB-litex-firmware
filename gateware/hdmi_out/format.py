@@ -38,6 +38,11 @@ def phy_layout(pack_factor):
         r.append(("p"+str(i), phy_layout_s))
     return r
 
+def phy_layout_c(pack_factor, ndmas):
+    r = [("hsync", 1), ("vsync", 1), ("de", 1)]
+    for j in range(ndmas):
+        r.append(("n"+str(j), phy_layout(pack_factor)[3:]))
+    return r
 
 class FrameInitiator(spi.SingleGenerator):
     def __init__(self, bus_aw, pack_factor, ndmas=1):
@@ -69,7 +74,7 @@ class FrameInitiator(spi.SingleGenerator):
 
 
 class VTG(Module):
-    def __init__(self, pack_factor):
+    def __init__(self, pack_factor, ndmas):
         hbits_dyn = _hbits - log2_int(pack_factor)
         timing_layout = [
             ("hres", hbits_dyn),
@@ -81,8 +86,8 @@ class VTG(Module):
             ("vsync_end", _vbits),
             ("vscan", _vbits)]
         self.timing = Sink(timing_layout)
-        self.pixels = Sink(pixel_layout(pack_factor))
-        self.phy = Source(phy_layout(pack_factor))
+        self.pixels = Sink(pixel_layout_c(pack_factor, ndmas))
+        self.phy = Source(phy_layout_c(pack_factor, ndmas))
         self.busy = Signal()
 
         ###
@@ -98,8 +103,12 @@ class VTG(Module):
         self.comb += [
             active.eq(hactive & vactive),
             If(active,
-                [getattr(getattr(self.phy.payload, p), c).eq(getattr(getattr(self.pixels.payload, p), c)[skip:])
-                    for p in ["p"+str(i) for i in range(pack_factor)] for c in ["y", "cb_cr"]],
+                [getattr(getattr(getattr(self.phy.payload, n), p), c).
+                eq(getattr(getattr(getattr(self.pixels.payload, n), p), c)[skip:])
+                    for n in ["n"+str(i) for i in range(ndmas)] 
+                    for p in ["p"+str(i) for i in range(pack_factor)] 
+                    for c in ["y", "cb_cr"]],
+             
                 self.phy.de.eq(1)
             ),
             self.pixels.ack.eq(self.phy.ack & active)
