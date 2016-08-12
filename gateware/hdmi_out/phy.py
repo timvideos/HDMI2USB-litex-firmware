@@ -225,8 +225,7 @@ class Driver(Module, AutoCSR):
         self.sync.pix += de_r.eq(fifo.pix_de)
 
         floatmults = []
-        mult_dma = [None]*ndmas
-        mult_dma = self.dm
+        self.x = []
 
         for n in range(ndmas):
 
@@ -253,16 +252,17 @@ class Driver(Module, AutoCSR):
             floatmult = FloatMultRGB()
             self.submodules += RenameClockDomains(floatmult, "pix")            
             floatmults.append(floatmult)
-            self.mult_dma[n] = CSRStorage(16, reset=14336)
+
+            CSR_name = 'dma' + str(n)
+            setattr(self , CSR_name , CSRStorage(16, reset=14336, name = CSR_name))
 
             self.comb += [
                 floatmult.sink.r1.eq(rgb2rgb16f.source.rf),
                 floatmult.sink.g1.eq(rgb2rgb16f.source.gf),
                 floatmult.sink.b1.eq(rgb2rgb16f.source.bf),
-                floatmult.sink.r2.eq(self.mult_dma[n].storage),
-                floatmult.sink.r2.eq(getattr(getattr(self,'mult_dma'+str(n))),'storage'),
-                floatmult.sink.g2.eq(getattr(getattr(self,'mult_dma'+str(n))),'storage'),
-                floatmult.sink.b2.eq(getattr(getattr(self,'mult_dma'+str(n))),'storage'),
+                floatmult.sink.r2.eq(getattr(getattr(self, CSR_name), 'storage')),
+                floatmult.sink.g2.eq(getattr(getattr(self, CSR_name), 'storage')),
+                floatmult.sink.b2.eq(getattr(getattr(self, CSR_name), 'storage')),
                 floatmult.sink.stb.eq(rgb2rgb16f.source.stb),
                 rgb2rgb16f.source.ack.eq(floatmult.sink.ack),
                 floatmult.sink.sop.eq(rgb2rgb16f.source.sop),
@@ -271,23 +271,48 @@ class Driver(Module, AutoCSR):
 
         self.mix_source0 = CSRStorage(1, reset=0)
         self.mix_source1 = CSRStorage(1, reset=1)
+        mul0 = FloatMultRGB()
+        mul1 = FloatMultRGB()
+
+        self.comb += [
+            If  (self.mix_source0.storage == 0,
+                    mul0 = floatmults[0]
+                )
+            .Elif(self.mix_source0.storage == 1,
+                    mul0 = floatmults[1]
+                ),
+
+            If  (self.mix_source1.storage == 0,
+                    mul1 = floatmults[0]
+                 )
+            .Elif(self.mix_source1.storage == 1,
+                    mul1 = floatmults[1]
+                )
+
+
+        ]
+
+        self.comb += [
+            in0.eq(self.mix_source0.storage),
+            in1.eq(self.mix_source1.storage)
+        ]
 
         floatadd = FloatAddRGB()
         self.submodules += RenameClockDomains(floatadd, "pix")
         self.comb += [
 
-            floatadd.sink.r1.eq(floatmult[0].source.rf),
-            floatadd.sink.g1.eq(floatmult[0].source.gf),
-            floatadd.sink.b1.eq(floatmult[0].source.bf),
-            floatadd.sink.r2.eq(floatmult[1].source.rf),
-            floatadd.sink.g2.eq(floatmult[1].source.gf),
-            floatadd.sink.b2.eq(floatmult[1].source.bf),
+            floatadd.sink.r1.eq(floatmults[in0].source.rf),
+            floatadd.sink.g1.eq(floatmults[in0].source.gf),
+            floatadd.sink.b1.eq(floatmults[in0].source.bf),
+            floatadd.sink.r2.eq(floatmults[in1].source.rf),
+            floatadd.sink.g2.eq(floatmults[in1].source.gf),
+            floatadd.sink.b2.eq(floatmults[in1].source.bf),
 
-            floatadd.sink.stb.eq(floatmults[0].source.stb & floatmults[1].source.stb ),
-            floatadd.sink.sop.eq(floatmults[0].source.sop & floatmults[1].source.sop ),
-            floatadd.sink.eop.eq(floatmults[0].source.eop & floatmults[1].source.eop ),
-            floatmults[0].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb),
-            floatmults[1].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb)
+            floatadd.sink.stb.eq(floatmults[in0].source.stb & floatmults[in1].source.stb ),
+            floatadd.sink.sop.eq(floatmults[in0].source.sop & floatmults[in1].source.sop ),
+            floatadd.sink.eop.eq(floatmults[in0].source.eop & floatmults[in1].source.eop ),
+            floatmults[in0].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb),
+            floatmults[in1].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb)
         ]
 
 
