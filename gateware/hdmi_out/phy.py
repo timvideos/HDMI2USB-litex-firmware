@@ -269,50 +269,25 @@ class Driver(Module, AutoCSR):
                 floatmult.sink.eop.eq(rgb2rgb16f.source.eop),
             ]
 
-        self.mix_source0 = CSRStorage(1, reset=0)
-        self.mix_source1 = CSRStorage(1, reset=1)
-        mul0 = FloatMultRGB()
-        mul1 = FloatMultRGB()
-
-        self.comb += [
-            If  (self.mix_source0.storage == 0,
-                    mul0 = floatmults[0]
-                )
-            .Elif(self.mix_source0.storage == 1,
-                    mul0 = floatmults[1]
-                ),
-
-            If  (self.mix_source1.storage == 0,
-                    mul1 = floatmults[0]
-                 )
-            .Elif(self.mix_source1.storage == 1,
-                    mul1 = floatmults[1]
-                )
-
-
-        ]
-
-        self.comb += [
-            in0.eq(self.mix_source0.storage),
-            in1.eq(self.mix_source1.storage)
-        ]
+#        self.mix_source0 = CSRStorage(1, reset=0)
+#        self.mix_source1 = CSRStorage(1, reset=1)
 
         floatadd = FloatAddRGB()
         self.submodules += RenameClockDomains(floatadd, "pix")
         self.comb += [
 
-            floatadd.sink.r1.eq(floatmults[in0].source.rf),
-            floatadd.sink.g1.eq(floatmults[in0].source.gf),
-            floatadd.sink.b1.eq(floatmults[in0].source.bf),
-            floatadd.sink.r2.eq(floatmults[in1].source.rf),
-            floatadd.sink.g2.eq(floatmults[in1].source.gf),
-            floatadd.sink.b2.eq(floatmults[in1].source.bf),
+            floatadd.sink.r1.eq(floatmults[0].source.rf),
+            floatadd.sink.g1.eq(floatmults[0].source.gf),
+            floatadd.sink.b1.eq(floatmults[0].source.bf),
+            floatadd.sink.r2.eq(floatmults[1].source.rf),
+            floatadd.sink.g2.eq(floatmults[1].source.gf),
+            floatadd.sink.b2.eq(floatmults[1].source.bf),
 
-            floatadd.sink.stb.eq(floatmults[in0].source.stb & floatmults[in1].source.stb ),
-            floatadd.sink.sop.eq(floatmults[in0].source.sop & floatmults[in1].source.sop ),
-            floatadd.sink.eop.eq(floatmults[in0].source.eop & floatmults[in1].source.eop ),
-            floatmults[in0].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb),
-            floatmults[in1].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb)
+            floatadd.sink.stb.eq(floatmults[0].source.stb & floatmults[1].source.stb ),
+            floatadd.sink.sop.eq(floatmults[0].source.sop & floatmults[1].source.sop ),
+            floatadd.sink.eop.eq(floatmults[0].source.eop & floatmults[1].source.eop ),
+            floatmults[0].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb),
+            floatmults[1].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb)
         ]
 
 
