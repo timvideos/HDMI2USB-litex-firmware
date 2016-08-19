@@ -7,7 +7,7 @@ from migen.actorlib import structuring, misc
 from misoclib.mem.sdram.frontend import dma_lasmi
 from gateware.hdmi_out.format import bpp, pixel_layout, pixel_layout_c, FrameInitiator, VTG
 from gateware.hdmi_out.phy import Driver
-from gateware.hdmi_out.mixing import MixerBlock
+#from gateware.hdmi_out.mixing import MixerBlock
 from gateware.i2c import I2C
 
 
@@ -18,16 +18,13 @@ class HDMIOut(Module, AutoCSR):
             self.submodules.i2c = I2C(pads)
 
         lasmim_list = [dma.crossbar.get_master() for i in range(ndmas)]
-
         pack_factor = lasmim_list[0].dw//bpp
-
         g = DataFlowGraph()
 
         # Define Modules
+
         self.fi = FrameInitiator(lasmim_list[0].aw, pack_factor, ndmas)
         self.pg = PixelGather(self.fi, lasmim_list, pack_factor, ndmas, g)
-
-#        mixer = MixerBlock(pixel_layout_c(pack_factor, ndmas), pixel_layout(pack_factor), pack_factor)
         vtg = VTG(pack_factor, ndmas)
         self.driver = Driver(pack_factor, ndmas, pads, external_clocking)
 
@@ -48,12 +45,14 @@ class PixelGather(Module):
         for i in range(ndmas):
 
             # Define Modules
+
             lasmimb = lasmim_list[i]
             intseq = misc.IntSequence(lasmimb.aw, lasmimb.aw)
             dma_out = AbstractActor(plumbing.Buffer)
             cast = structuring.Cast(lasmimb.dw, pixel_layout(pack_factor), reverse_to=True)
 
             # Define Connections
+
             g.add_connection(self.fi, intseq, source_subr=self.fi.dma_subr(i))
             g.add_pipeline(intseq, AbstractActor(plumbing.Buffer), dma_lasmi.Reader(lasmimb), dma_out, cast)
             g.add_connection(cast, self.combiner, sink_ep="sink"+str(i))

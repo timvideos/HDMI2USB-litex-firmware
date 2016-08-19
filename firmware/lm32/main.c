@@ -62,7 +62,7 @@ int main(void)
 #endif
 	ci_prompt();
 	while(1) {
-		hdmi_out0_driver_hout_source_write(1);
+		hdmi_out0_driver_hdout_source_write(1);
 		processor_service();
 		ci_service();
 
