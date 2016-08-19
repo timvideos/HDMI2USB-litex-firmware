@@ -36,8 +36,7 @@ def CreateVideoMixerSoC(base):
                 fifo_depth=512)
             self.submodules.hdmi_out0 = HDMIOut(
                 platform.request("hdmi_out", 0),
-                self.sdram.crossbar.get_master(),
-                self.sdram.crossbar.get_master(),
+                self.sdram,
                 ndmas=2)
             # Share clocking with hdmi_out0 since no PLL_ADV left.
 #            self.submodules.hdmi_out1 = HDMIOut(

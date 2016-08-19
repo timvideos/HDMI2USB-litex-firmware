@@ -224,87 +224,47 @@ class Driver(Module, AutoCSR):
         de_r = Signal()
         self.sync.pix += de_r.eq(fifo.pix_de)
 
-        floatmults = []
-        self.x = []
+#        for n in range(ndmas):
 
-        for n in range(ndmas):
+        chroma_upsampler0 = YCbCr422to444()
+        self.submodules += RenameClockDomains(chroma_upsampler0, "pix")
 
-            chroma_upsampler = YCbCr422to444()
-            self.submodules += RenameClockDomains(chroma_upsampler, "pix")
-            self.comb += [
-              chroma_upsampler.sink.stb.eq(fifo.pix_de),
-              chroma_upsampler.sink.sop.eq(fifo.pix_de & ~de_r),
-              chroma_upsampler.sink.y.eq(getattr(fifo,'pix_y_n'+str(n))),
-              chroma_upsampler.sink.cb_cr.eq(getattr(fifo,'pix_cb_cr_n'+str(n)))
-            ]
+        chroma_upsampler1 = YCbCr422to444()
+        self.submodules += RenameClockDomains(chroma_upsampler1, "pix")
 
-            ycbcr2rgb = YCbCr2RGB()
-            self.submodules += RenameClockDomains(ycbcr2rgb, "pix")
-
-            rgb2rgb16f = RGB2RGB16f()
-            self.submodules += RenameClockDomains(rgb2rgb16f, "pix")
-
-            self.comb += [
-                Record.connect(chroma_upsampler.source, ycbcr2rgb.sink),
-                Record.connect(ycbcr2rgb.source, rgb2rgb16f.sink),
-            ]
-
-            floatmult = FloatMultRGB()
-            self.submodules += RenameClockDomains(floatmult, "pix")            
-            floatmults.append(floatmult)
-
-            CSR_name = 'dma' + str(n)
-            setattr(self , CSR_name , CSRStorage(16, reset=14336, name = CSR_name))
-
-            self.comb += [
-                floatmult.sink.r1.eq(rgb2rgb16f.source.rf),
-                floatmult.sink.g1.eq(rgb2rgb16f.source.gf),
-                floatmult.sink.b1.eq(rgb2rgb16f.source.bf),
-                floatmult.sink.r2.eq(getattr(getattr(self, CSR_name), 'storage')),
-                floatmult.sink.g2.eq(getattr(getattr(self, CSR_name), 'storage')),
-                floatmult.sink.b2.eq(getattr(getattr(self, CSR_name), 'storage')),
-                floatmult.sink.stb.eq(rgb2rgb16f.source.stb),
-                rgb2rgb16f.source.ack.eq(floatmult.sink.ack),
-                floatmult.sink.sop.eq(rgb2rgb16f.source.sop),
-                floatmult.sink.eop.eq(rgb2rgb16f.source.eop),
-            ]
-
-#        self.mix_source0 = CSRStorage(1, reset=0)
-#        self.mix_source1 = CSRStorage(1, reset=1)
-
-        floatadd = FloatAddRGB()
-        self.submodules += RenameClockDomains(floatadd, "pix")
         self.comb += [
+            chroma_upsampler0.sink.stb.eq(fifo.pix_de),
+            chroma_upsampler0.sink.sop.eq(fifo.pix_de & ~de_r),
+            chroma_upsampler0.sink.y.eq(fifo.pix_y_n0),
+            chroma_upsampler0.sink.cb_cr.eq(fifo.pix_cb_cr_n0),
 
-            floatadd.sink.r1.eq(floatmults[0].source.rf),
-            floatadd.sink.g1.eq(floatmults[0].source.gf),
-            floatadd.sink.b1.eq(floatmults[0].source.bf),
-            floatadd.sink.r2.eq(floatmults[1].source.rf),
-            floatadd.sink.g2.eq(floatmults[1].source.gf),
-            floatadd.sink.b2.eq(floatmults[1].source.bf),
+            chroma_upsampler1.sink.stb.eq(fifo.pix_de),
+            chroma_upsampler1.sink.sop.eq(fifo.pix_de & ~de_r),
+            chroma_upsampler1.sink.y.eq(fifo.pix_y_n1),
+            chroma_upsampler1.sink.cb_cr.eq(fifo.pix_cb_cr_n1),
 
-            floatadd.sink.stb.eq(floatmults[0].source.stb & floatmults[1].source.stb ),
-            floatadd.sink.sop.eq(floatmults[0].source.sop & floatmults[1].source.sop ),
-            floatadd.sink.eop.eq(floatmults[0].source.eop & floatmults[1].source.eop ),
-            floatmults[0].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb),
-            floatmults[1].source.ack.eq(floatadd.sink.ack & floatadd.sink.stb)
         ]
 
+        ycbcr2rgb0 = YCbCr2RGB()
+        self.submodules += RenameClockDomains(ycbcr2rgb0, "pix")
 
-        rgb16f2rgb = RGB16f2RGB()
-        self.submodules += RenameClockDomains(rgb16f2rgb, "pix")
+        ycbcr2rgb1 = YCbCr2RGB()
+        self.submodules += RenameClockDomains(ycbcr2rgb1, "pix")
+
         self.comb += [
-            Record.connect(floatadd.source, rgb16f2rgb.sink),
-            rgb16f2rgb.source.ack.eq(1)
-        ]
+                Record.connect(chroma_upsampler0.source, ycbcr2rgb0.sink),
+                ycbcr2rgb0.source.ack.eq(1),
 
+                Record.connect(chroma_upsampler1.source, ycbcr2rgb1.sink),
+                ycbcr2rgb1.source.ack.eq(1)
+            ]
 
         # XXX need clean up
         de = fifo.pix_de
         hsync = fifo.pix_hsync
         vsync = fifo.pix_vsync
-        for i in range(chroma_upsampler.latency +
-        	           ycbcr2rgb.latency):
+        for i in range(chroma_upsampler0.latency +
+        	           ycbcr2rgb0.latency):
             next_de = Signal()
             next_vsync = Signal()
             next_hsync = Signal()
@@ -317,12 +277,21 @@ class Driver(Module, AutoCSR):
             vsync = next_vsync
             hsync = next_hsync
 
+        self.hout_source = CSRStorage(1, reset=0)
+
         self.submodules.hdmi_phy = hdmi.PHY(self.clocking.serdesstrobe, pads)
         self.comb += [
             self.hdmi_phy.hsync.eq(hsync),
             self.hdmi_phy.vsync.eq(vsync),
             self.hdmi_phy.de.eq(de),
-            self.hdmi_phy.r.eq(ycbcr2rgb.source.r),
-            self.hdmi_phy.g.eq(ycbcr2rgb.source.g),
-            self.hdmi_phy.b.eq(ycbcr2rgb.source.b)
+            If( (self.hout_source.storage==0),
+                self.hdmi_phy.r.eq(ycbcr2rgb0.source.r),
+                self.hdmi_phy.g.eq(ycbcr2rgb0.source.g),
+                self.hdmi_phy.b.eq(ycbcr2rgb0.source.b)
+            )
+            .Elif( (self.hout_source.storage==1),
+                self.hdmi_phy.r.eq(ycbcr2rgb1.source.r),
+                self.hdmi_phy.g.eq(ycbcr2rgb1.source.g),
+                self.hdmi_phy.b.eq(ycbcr2rgb1.source.b)
+            )
         ]

@@ -12,13 +12,12 @@ from gateware.i2c import I2C
 
 
 class HDMIOut(Module, AutoCSR):
-    def __init__(self, pads, dma0, dma1, ndmas=1, external_clocking=None):
+    def __init__(self, pads, dma, ndmas=1, external_clocking=None):
 
         if hasattr(pads, "scl"):
             self.submodules.i2c = I2C(pads)
 
-#        lasmim_list = [dma.crossbar.get_master() for i in range(ndmas)]
-        lasmim_list = [ dma0, dma1 ]
+        lasmim_list = [dma.crossbar.get_master() for i in range(ndmas)]
 
         pack_factor = lasmim_list[0].dw//bpp
 
