@@ -217,15 +217,14 @@ class Driver(Module, AutoCSR):
 
         self.submodules.clocking = _Clocking(pads, external_clocking)
 
-        mix = Mixer(ndmas, fifo)
-
+        self.submodules.mix = Mixer(ndmas, fifo)
 
         # XXX need clean up
         de = fifo.pix_de
         hsync = fifo.pix_hsync
         vsync = fifo.pix_vsync
-        for i in range(mix.chroma_upsampler.latency +
-        	           mix.ycbcr2rgb.latency):
+        for i in range(self.mix.chroma_upsampler.latency +
+        	           self.mix.ycbcr2rgb.latency):
             next_de = Signal()
             next_vsync = Signal()
             next_hsync = Signal()
@@ -238,22 +237,46 @@ class Driver(Module, AutoCSR):
             vsync = next_vsync
             hsync = next_hsync
 
-        self.hdout_source = CSRStorage(8, reset=0)
+        self.hdout_source = CSRStorage(8, reset=1)
 
         self.submodules.hdmi_phy = hdmi.PHY(self.clocking.serdesstrobe, pads)
         self.comb += [
             self.hdmi_phy.hsync.eq(hsync),
             self.hdmi_phy.vsync.eq(vsync),
             self.hdmi_phy.de.eq(de),
-            self.hdmi_phy.r.eq(mix.out_r[self.hdout_source.storage]),
-            self.hdmi_phy.g.eq(mix.out_g[self.hdout_source.storage]),
-            self.hdmi_phy.b.eq(mix.out_b[self.hdout_source.storage]),
+            self.hdmi_phy.r.eq(self.mix.out_r[self.hdout_source.storage]),
+            self.hdmi_phy.g.eq(self.mix.out_g[self.hdout_source.storage]),
+            self.hdmi_phy.b.eq(self.mix.out_b[self.hdout_source.storage]),
 
         ]
 
 class Mixer(Module, AutoCSR):
-    def __init__(self, ndmas, fifo):
+    """Mixer Module
 
+    This is a dummy mixer module, it takes YCbCr 4:2:2 of each of the DMAs, 
+    converts it to YCbCr 4:4:4 and then to RGB using appropriate modules and 
+    outputs an Array class which contains RGB outputs from each these DMAs.
+
+    Parameters
+    ----------
+    ndmas: int
+        Number of DMA engines to be initiated, specified in target file. 
+    
+    fifo: _FIFO class
+        Instantiation of _FIFO class in Driver Module
+
+    Attributes
+    ----------
+    out_r : Array class (Array of Signals), out
+        R pixel output from each of the ndmas in an Array of size ndmas    
+    out_g : Array class (Array of Signals), out
+        G pixel output from each of the ndmas in an Array of size ndmas    
+    out_b : Array class (Array of Signals), out
+        B pixel output from each of the ndmas in an Array of size ndmas    
+    """
+
+    def __init__(self, ndmas, fifo):
+        
         self.out_r = Array([Signal(8) for i in range(ndmas)])
         self.out_g = Array([Signal(8) for i in range(ndmas)])
         self.out_b = Array([Signal(8) for i in range(ndmas)])
@@ -283,7 +306,3 @@ class Mixer(Module, AutoCSR):
                 self.out_b[n].eq(self.ycbcr2rgb.source.b),
                 self.ycbcr2rgb.source.ack.eq(1),
             ]
-
-
-
-
