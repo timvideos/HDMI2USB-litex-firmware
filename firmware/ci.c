@@ -31,6 +31,7 @@
 #include "config.h"
 #include "edid.h"
 #include "encoder.h"
+#include "flash.h"
 #include "fx2.h"
 #include "hdmi_in0.h"
 #include "hdmi_in1.h"
@@ -174,6 +175,9 @@ static void help_debug(void)
 #endif
 	wputs("  debug dna                      - show Board's DNA");
 	wputs("  debug edid                     - dump monitor EDID");
+#ifdef CSR_SPIFLASH_BASE
+	wputs("  debug spiflash                 - test bitbang write");
+#endif
 #ifdef CSR_CAS_BASE
 	wputs("  debug cas leds <value>         - change the status LEDs");
 	wputs("  debug cas switches             - read the control switches status");
@@ -1266,6 +1270,10 @@ void ci_service(void)
 #endif
 			if(found == 0)
 				wprintf("%s port has no EDID capabilities\r\n", token);
+#ifdef CSR_SPIFLASH_BASE
+		} else if(strcmp(token, "spiflash") == 0) {
+				bitbang_test();
+#endif
 #ifdef CSR_CAS_BASE
 		} else if(strcmp(token, "cas") == 0) {
 			token = get_token(&str);

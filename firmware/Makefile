@@ -24,6 +24,7 @@ OBJECTS=\
 	encoder.o \
 	etherbone.o \
 	ethernet.o \
+	flash.o \
 	fx2.o \
 	hdmi_in0.o \
 	hdmi_out0.o \
