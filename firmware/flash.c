@@ -86,6 +86,7 @@ void bitbang_test(void) {
 
 	write_to_flash((unsigned int) free_start, (unsigned char *) buf, 512);
 	mr((unsigned int) free_start, 512);
+	erase_flash_sector((unsigned int) free_start);
 }
 
 #endif
