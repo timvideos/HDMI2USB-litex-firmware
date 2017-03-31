@@ -9,6 +9,7 @@
 #include <time.h>
 #include <console.h>
 #include <spiflash.h>
+#include <system.h>
 #include "ci.h"
 
 
@@ -85,6 +86,7 @@ void bitbang_test(void) {
 	}
 
 	write_to_flash((unsigned int) free_start, (unsigned char *) buf, 512);
+	flush_cpu_dcache();
 	mr((unsigned int) free_start, 512);
 	erase_flash_sector((unsigned int) free_start);
 }
