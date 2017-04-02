@@ -82,7 +82,7 @@ void bitbang_test(void) {
 	mr((unsigned int) free_start, 512);
 
 	for(i = 0; i < 512; i++) {
-		buf[i] = ~(*(free_start + i));
+		buf[i] = (unsigned int) i;
 	}
 
 	write_to_flash((unsigned int) free_start, (unsigned char *) buf, 512);
