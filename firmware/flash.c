@@ -1,6 +1,6 @@
 #include <generated/csr.h>
 #include <generated/mem.h>
-#ifdef SPIFLASH_PAGE_SIZE
+#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
 #include "flash.h"
 
 #include <stdio.h>
