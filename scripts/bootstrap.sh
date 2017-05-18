@@ -14,8 +14,6 @@ if [ -z "$GIT_BRANCH" ]; then
   GIT_BRANCH=master
 fi
 
-TMOUT=5
-
 if ! git help > /dev/null 2>&1; then
  yn=y
  #read -p "Install git to checkout the repository? (y/n) " yn
