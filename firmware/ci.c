@@ -186,6 +186,15 @@ static void help_debug(void)
 #endif
 }
 
+static void help_write(void)
+{
+	wputs("write commands");
+#ifdef CSR_SPIFLASH_BASE
+	wputs("  write spi xmodem addr len      - upload new spi flash firmware (xmodem)");
+	wputs("  write spi sfl addr len crc     - upload new spi flash firmware (flterm)");
+#endif
+}
+
 static void ci_help(void)
 {
 	wputs("help        - this command");
@@ -227,6 +236,7 @@ static void ci_help(void)
 	wputs("");
 #endif
 	help_debug();
+	help_write();
 }
 
 static char *readstr(void)
@@ -974,6 +984,68 @@ static void debug_ddr(void)
 }
 #endif
 
+#undef NEXT_TOKEN_OR_RETURN
+#define NEXT_TOKEN_OR_RETURN(s, t, reason)				\
+	if(!(t = get_token(&s))) {				\
+		wprintf("Parse failed - " reason " \r\n");	\
+		return;						\
+	}
+
+#ifdef CSR_SPIFLASH_BASE
+static void write_spi(char* str)
+{
+	char *token;
+	int rc;
+	unsigned long addr;
+	unsigned long len;
+	unsigned long crc;
+
+
+	token = get_token(&str);
+
+	if(strcmp(token, "xmodem") == 0) {
+		NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
+		addr = atoi(token);
+
+		NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
+		len = atoi(token);
+
+		// Get CRC anyway to consume the entire line just in case, but ignore it.
+		get_token(&str);
+		(void) crc;
+
+		wprintf("Will use xmodem with addr %lX, len %ld.\r\n", addr, len);
+		rc = write_xmodem(addr, len);
+	}
+	else if(strcmp(token, "sfl") == 0) {
+		NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
+		addr = atoi(token);
+
+		NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
+		len = atoi(token);
+
+		NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
+		crc = atoi(token);
+
+		wprintf("Will use sfl with addr %lX, len %ld, and crc %lX.\r\n", addr, len, crc);
+		rc = write_sfl(addr, len, crc);
+	}
+	else {
+		wprintf("Protocol not supported.\r\n");
+		return;
+	}
+
+	if(rc == 0)
+		wprintf("New firmware written successfully.\r\n");
+	else if(rc == -1)
+		wprintf("CRC error transmitting firmware.\r\n");
+	else if(rc == -2)
+		wprintf("Flash comparison with in-memory image failed.\r\n");
+
+	return;
+}
+#endif
+
 void ci_prompt(void)
 {
 	wprintf("H2U %s>", uptime_str());
@@ -1022,6 +1094,8 @@ void ci_service(void)
 #endif
 		else if(strcmp(token, "debug") == 0)
 			help_debug();
+		else if(strcmp(token, "write") == 0)
+			help_write();
 		else
 			ci_help();
 		wputs("");
@@ -1303,7 +1377,17 @@ void ci_service(void)
 #endif
 		} else
 			help_debug();
-
+	} else if(strcmp(token, "write") == 0) {
+		token = get_token(&str);
+		if(false) { } // XXX: Replace with "command not supported?" if
+		// CSR_SPIFLASH_BASE isn't defined?
+#ifdef CSR_SPIFLASH_BASE
+		else if((strcmp(token, "spi") == 0) ) {
+			write_spi(str);
+		}
+#endif
+		else
+			help_write();
 	} else if(strcmp(token, "version") == 0) {
 		print_version();
 	} else {

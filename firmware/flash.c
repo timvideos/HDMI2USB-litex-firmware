@@ -6,15 +6,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <uart.h>
 #include <time.h>
 #include <console.h>
 #include <spiflash.h>
 #include <system.h>
 #include "ci.h"
 
-
 #define test_size 1024
 
+static char bitbang_buffer[128*1024];
+static char bus_buffer[128*1024];
+static char xmodem_buffer[1027];
 
 #define NUMBER_OF_BYTES_ON_A_LINE 16
 static void dump_bytes(unsigned int *ptr, int count, unsigned addr)
@@ -71,7 +74,8 @@ void bitbang_test(void) {
 	unsigned int free_space;
 	int i = 0;
 
-	unsigned int buf[512];
+	unsigned int buf_w[512];
+	unsigned int buf_r[512];
 
 	flashbase = (unsigned int *)FLASH_BOOT_ADDRESS;
 	length = *flashbase++;
@@ -82,13 +86,41 @@ void bitbang_test(void) {
 	mr((unsigned int) free_start, 512);
 
 	for(i = 0; i < 512; i++) {
-		buf[i] = (unsigned int) i;
+		buf_w[i] = (unsigned int) ( (i << 8) | i );
 	}
 
-	write_to_flash((unsigned int) free_start, (unsigned char *) buf, 512);
+	printf("Read using memory bus 1.\n");
+	write_to_flash((unsigned int) free_start, (unsigned char *) buf_w, 512);
 	flush_cpu_dcache();
 	mr((unsigned int) free_start, 512);
+
+	printf("Read using bitbang test.\n");
+	read_from_flash((unsigned int) free_start, (unsigned char *) buf_r, 512);
+	mr((unsigned int) &buf_r[0], 512); // &buf_r[0]: Collapse to ptr to first element.
+
+	printf("Read using memory bus 2.\n");
+	flush_cpu_dcache();
+	mr((unsigned int) free_start, 512);
+
 	erase_flash_sector((unsigned int) free_start);
+}
+
+
+#define SOH 1
+#define STX 2
+#define EOT 4
+#define ACK 6
+#define NAK 21
+#define CAN 24
+
+// Abbreviated xmodem.
+int write_xmodem(unsigned long addr, unsigned long len) {
+	return 0;
+}
+
+
+int write_sfl(unsigned long addr, unsigned long len, unsigned long crc) {
+	return 0;
 }
 
 #endif
