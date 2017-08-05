@@ -4,8 +4,10 @@
 #include "flash.h"
 
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <uart.h>
 #include <time.h>
 #include <console.h>
@@ -17,7 +19,7 @@
 
 static char bitbang_buffer[128*1024];
 static char bus_buffer[128*1024];
-static char xmodem_buffer[1027];
+static char xmodem_buffer[1029];
 
 #define NUMBER_OF_BYTES_ON_A_LINE 16
 static void dump_bytes(unsigned int *ptr, int count, unsigned addr)
@@ -106,6 +108,16 @@ void bitbang_test(void) {
 }
 
 
+// XMODEM:
+// 10 tries to receive first char of packet- 10 seconds each
+// First char of first packet special- either send NAK or C (for CRC)
+
+
+// 1 second timeout for each recv'd char otherwise.
+
+// XMODEM helpers
+
+
 #define SOH 1
 #define STX 2
 #define EOT 4
@@ -113,10 +125,299 @@ void bitbang_test(void) {
 #define NAK 21
 #define CAN 24
 
-// Abbreviated xmodem.
-int write_xmodem(unsigned long addr, unsigned long len) {
+static inline unsigned short generate_crc(char * data, size_t size)
+{
+	const unsigned int crc_poly = 0x1021;
+	unsigned int crc = 0x0000;
+
+	for(unsigned int octet_count = 0; octet_count < size; octet_count++)
+	{
+		crc = (crc ^ (unsigned int) (data[octet_count] & (0xFF)) << 8);
+		for(unsigned int bit_count = 1; bit_count <= 8; bit_count++)
+		{
+			if(crc & 0x8000)
+			{
+				crc = (crc << 1) ^ crc_poly;
+			}
+			else
+			{
+				crc <<= 1;
+			}       
+		}
+	}
+	return crc;
+}
+
+
+// Return:
+// 0- Read was okay.
+// 1- We timed out.
+static int recv_with_timeout(unsigned int timeout, char * recvd) {
+	// Software-based timeout for now while QEMU timer is broken.
+	// 1/100th of clock frequency worked well for me.
+	for(unsigned int i = 0; i < CONFIG_CLOCK_FREQUENCY/100; i++) {
+		for(unsigned int j = 0; j < timeout; j++) {
+			//printf("%d, %d", i, j);
+			if(uart_read_nonblock()) {
+				*recvd = uart_read();
+				return 0;
+			}	
+		}
+	}
+	
+	return -1;
+}
+
+
+// Clear UART buffer until timeout occurs.
+static void purge_uart_buffer(void) {
+	char dummy;
+	while(recv_with_timeout(1, &dummy) == 0);
+}
+
+
+// Return
+// 0- Recv okay
+// -1- Transmitter timed out
+// -2- Using 1k and checksum- This doesn't make sense.
+// Full packet (including already filled start char) should be
+// passed into this function.
+static int recv_packet_with_timeout(char * packet, int using_crc, int using_1k) {
+	int bytes_total = 3; // 2 bytes for block number and ones-compl
+	
+	if(using_crc) {
+		bytes_total += 2;
+	} else {
+		bytes_total += 1;
+	} 
+	
+	if(using_1k) {
+		if(using_crc) {
+			return -2;
+		} else {
+			bytes_total += 1024;
+		}
+	} else {
+		bytes_total += 128;
+	}
+
+	for(int i = 1; i < bytes_total; i++) {
+		char xmit;
+		
+		if(recv_with_timeout(1, &xmit) == -1) {
+			return -1;
+		} else {
+			packet[i] = xmit;	
+		}
+	}
+	
 	return 0;
 }
+
+// Return codes:
+// 128 or 1024
+// -1- Invalid config
+static inline int payload_len(int using_crc, int using_1k) {
+	if(using_1k) {
+		if(using_crc) {
+			return -1;
+		} else {
+			return 1024;
+		}
+	} else {
+		return 128;
+	}
+}
+
+
+// Return codes:
+// 1- Previous block was resent- everything else okay.
+// 0- All is okay
+// -1- Invalid configuration
+// -2- Block mismatch in header
+// -3- Unexpected block
+// -4- Bad CRC/Checksum
+static inline int verify_packet(char * packet, unsigned char expected_block, int using_crc, int using_1k) {
+	int rc = 0;
+	
+	if(packet[1] == (expected_block - 1)) {
+		rc = 1;
+	} else if(packet[1] == expected_block) {
+		rc = 0; // Do nothing
+	} else {
+		return -3;
+	}
+
+	if(!(packet[1] == !packet[2])) {
+		return -2;
+	}
+
+	if(using_crc) {
+		if(!(generate_crc(&packet[3], payload_len(using_crc, using_1k) == 0))) {
+			return -4;
+		}
+	} else {
+		return -4; // Not implemented yet
+	}
+	
+	return rc;
+}
+
+
+// Abbreviated xmodem.
+int write_xmodem(unsigned long addr, unsigned long len) {
+	int using_1k = 0;
+	int using_crc = 1;
+	int initial_retries = 0;
+	unsigned int data_offset = 0;
+	unsigned char expected_block = 1;
+	
+	// Initial handshake
+	for(initial_retries = 0; initial_retries < 10; initial_retries++) {
+		char first;
+		char send = using_crc ? 'C' : NAK;
+		uart_write(send);
+		int res = recv_with_timeout(10, &first);
+
+		if(res == 0) {
+			switch(first) {
+				case SOH:
+					xmodem_buffer[0] = first;
+					goto initial_handshake_over;
+					break;
+				case STX:
+					xmodem_buffer[0] = first;
+					using_1k = 1;
+					goto initial_handshake_over;
+					break;
+				default:
+					// Unexpected/invalid char.
+					purge_uart_buffer();
+					break;
+			}
+		}
+		
+		// Switch to checksum mode after three timeouts.
+		if(initial_retries == 3) {
+			using_crc = 0; // Only set here. 
+		}
+	}
+	
+initial_handshake_over:
+	if(initial_retries >= 10) {
+		return -1;
+	}
+	
+	int initial_handshake_occurred = 1;
+	int done = 0;
+	int num_errors = 0;
+	char send_code;
+	while(!done) {
+		// Skip this the first time around. For control flow purposes
+		// It makes sense to keep it at top of while loop.	
+		if(!initial_handshake_occurred) {
+			int res;
+			char first;
+			
+			if(num_errors >= 10) {
+				send_code = CAN;
+			}
+			
+			// Subsequent handshakes
+			if(send_code == NAK)
+			{
+				purge_uart_buffer();
+			}
+
+			uart_write(send_code);
+			if(send_code == CAN) {
+				return -1;
+			} else {
+				res = recv_with_timeout(10, &first);
+			}
+
+			if(res == 0) {
+				switch(first) {
+					case SOH:
+						xmodem_buffer[0] = first;
+						break;
+					case STX:
+						xmodem_buffer[0] = first;
+						using_1k = 1;
+						break;
+					case EOT:
+						done = 1;
+						continue;
+					default:
+						// Unexpected/invalid char.
+						send_code = NAK;
+						num_errors++;
+						continue;
+				}
+			} else {
+				send_code = NAK;
+				num_errors++;
+				continue;
+			}
+		}
+		
+		if(initial_handshake_occurred) {
+			initial_handshake_occurred = 0;
+		}
+		
+		
+		// Subsequent receives
+		int recv_rc = recv_packet_with_timeout(xmodem_buffer, using_crc, using_1k);
+		switch(recv_rc) {
+			case 0:
+				break;
+			case -2:
+				send_code = CAN;
+				num_errors++;
+				continue;
+			case -1:
+			default:
+				send_code = NAK;
+				num_errors++;
+				continue;
+		}
+		
+		int ver_rc = verify_packet(xmodem_buffer, expected_block, using_crc, using_1k);
+		switch(ver_rc) {
+			case 0:
+				// Assuming !using_crc && using_1k is impossible.
+				{
+					int len = payload_len(using_crc, using_1k);
+					memcpy(bus_buffer + data_offset + len, xmodem_buffer + 3, len);
+					data_offset += len;
+				}
+				send_code = ACK;
+				expected_block++;
+				break;
+			case 1: // Last block was resent. Nothing to do.
+				send_code = ACK;
+				break;
+			case -1:
+			case -3:
+				send_code = CAN;
+				num_errors++;
+				continue;
+			case -2:
+			case -4:
+			default:
+				send_code = NAK;
+				num_errors++;
+				continue;
+		}
+		
+		// Every time we successfully send a packet, reset error count.
+		num_errors = 0;
+	}
+	
+	return 0;
+}
+
+
 
 
 int write_sfl(unsigned long addr, unsigned long len, unsigned long crc) {
