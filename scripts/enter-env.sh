@@ -289,6 +289,11 @@ hdmi2usb_prompt() {
 	if [ ! -z "$TARGET" ]; then
 		P="$P T=$TARGET"
 	fi
+	# FIXME: Show CPU is not default, but default is hard coded to lm32 at
+	# the moment...
+	if [ "$CPU" != "lm32" ]; then
+		P="$P C=$CPU"
+	fi
 	if [ ! -z "$PROG" ]; then
 		P="$P P=$PROG"
 	fi
