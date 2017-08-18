@@ -163,7 +163,11 @@ gateware-clean:
 
 # Firmware - the stuff which runs in the soft CPU inside the FPGA.
 # --------------------------------------
-firmware-cmd:
+FIRMWARE_MODULES=libmodem
+firmware-submodules: $(addsuffix /.git,$(addprefix third_party/,$(FIRMWARE_MODULES)))
+	@true
+
+firmware-cmd: firmware-submodules
 	mkdir -p $(TARGET_BUILD_DIR)
 ifneq ($(OS),Windows_NT)
 	$(MAKE_CMD) --no-compile-gateware \
@@ -199,6 +203,7 @@ firmware-clear: firmware-clear-$(PLATFORM)
 .PHONY: firmware-load-$(PLATFORM) firmware-flash-$(PLATFORM) firmware-connect-$(PLATFORM) firmware-clear-$(PLATFORM)
 
 firmware-clean:
+	cd third_party/libmodem && scons TARGET_OS=hdmi2usb-lm32 HDMI2USB_BUILD=$(PWD)/$(TARGET_BUILD_DIR) -c
 	rm -rf $(TARGET_BUILD_DIR)/software
 
 .PHONY: firmware-cmd $(FIRMWARE_FILEBASE).bin firmware firmware-load firmware-flash firmware-connect firmware-clean
@@ -353,6 +358,7 @@ reset: reset-$(PLATFORM)
 
 clean:
 	rm build/cache.mk
+	cd third_party/libmodem && scons TARGET_OS=hdmi2usb-lm32 HDMI2USB_BUILD=$(PWD)/$(TARGET_BUILD_DIR) -c
 	rm -rf $(TARGET_BUILD_DIR)
 	py3clean . || rm -rf $$(find -name __pycache__)
 

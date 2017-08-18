@@ -16,6 +16,9 @@ CFLAGS += -DPLATFORM_$(UPLATFORM) -DTARGET_$(UTARGET)
 BUILD_DIRECTORY=$(BUILDINC_DIRECTORY)/../../
 FIRMBUILD_DIRECTORY=$(BUILD_DIRECTORY)/software/firmware
 
+LIBMODEM_DIR=../../../../third_party/libmodem
+LIBMODEM=$(LIBMODEM_DIR)/build/hdmi2usb-lm32/libmodem.a
+
 OBJECTS=\
 	bist.o \
 	ci.o \
@@ -53,7 +56,8 @@ OBJECTS=\
 
 CFLAGS += \
 	-I$(FIRMWARE_DIRECTORY) \
-	-I$(BUILD_DIRECTORY)/software/firmware
+	-I$(BUILD_DIRECTORY)/software/firmware \
+	-I$(LIBMODEM_DIR)/src
 
 CFLAGS += \
 	-Wall \
@@ -75,7 +79,7 @@ all: firmware.bin firmware.fbi
 	$(OBJCOPY) -O binary $< $@
 	chmod -x $@
 
-firmware.elf: $(FIRMWARE_DIRECTORY)/linker.ld $(OBJECTS)
+firmware.elf: $(FIRMWARE_DIRECTORY)/linker.ld $(OBJECTS) $(LIBMODEM)
 
 %.elf: ../libbase/crt0-$(CPU).o ../libbase/libbase-nofloat.a ../libcompiler_rt/libcompiler_rt.a ../uip/libuip.a
 	$(LD) $(LDFLAGS) \
@@ -88,7 +92,9 @@ firmware.elf: $(FIRMWARE_DIRECTORY)/linker.ld $(OBJECTS)
                 -L../libcompiler_rt \
 		-lcompiler_rt \
 		-L../uip \
-		-luip
+		-luip \
+		-L$(LIBMODEM_DIR)/build/hdmi2usb-lm32 \
+		-lmodem
 	chmod -x $@
 
 # pull in dependency info for *existing* .o files
@@ -132,5 +138,8 @@ $(FIRMBUILD_DIRECTORY)/hdmi_in1.c: $(FIRMWARE_DIRECTORY)/hdmi_in0.c $(FIRMWARE_D
 	bash $(FIRMWARE_DIRECTORY)/hdmi_in.sh 1
 	# Check the files exist
 	[ -e $(FIRMBUILD_DIRECTORY)/hdmi_in1.c ]
+
+$(LIBMODEM):
+	cd $(LIBMODEM_DIR) && scons TARGET_OS=hdmi2usb-lm32 BUILD_TYPE=Release HDMI2USB_BUILD=$(BUILD_DIRECTORY)
 
 .PHONY: all clean libs version_data
