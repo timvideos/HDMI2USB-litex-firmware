@@ -139,7 +139,7 @@ $(FIRMBUILD_DIRECTORY)/hdmi_in1.c: $(FIRMWARE_DIRECTORY)/hdmi_in0.c $(FIRMWARE_D
 	# Check the files exist
 	[ -e $(FIRMBUILD_DIRECTORY)/hdmi_in1.c ]
 
-$(LIBMODEM):
+$(LIBMODEM): $(LIBMODEM_DIR)/src/*.c
 	cd $(LIBMODEM_DIR) && scons TARGET_OS=hdmi2usb-lm32 BUILD_TYPE=Release HDMI2USB_BUILD=$(BUILD_DIRECTORY)
 
 .PHONY: all clean libs version_data
