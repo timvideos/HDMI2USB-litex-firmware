@@ -12,6 +12,7 @@
 #include <time.h>
 #include <console.h>
 #include <spiflash.h>
+#include <crc.h>
 #include <system.h>
 #include "ci.h"
 
@@ -148,7 +149,9 @@ int write_to_buf(const char * buf, const int buf_size, const int eof, void * con
 int write_xmodem(unsigned long addr, unsigned long len, unsigned long crc) {
 	flash_writer_t writer = { bitbang_buffer, len, 0, sizeof(bitbang_buffer)/sizeof(bitbang_buffer[0]) };
 	serial_handle_t uart;
+	unsigned int calc_crc;
 
+	printf("Phase 1: Receive file (Please start XMODEM transmission).\r\n");
 	serial_init(0, 0, &uart);
 	int rc = xmodem_rx(write_to_buf, xmodem_buffer, &writer, uart, XMODEM_1K);
 	serial_close(&uart);
@@ -158,6 +161,12 @@ int write_xmodem(unsigned long addr, unsigned long len, unsigned long crc) {
 	}
 
 	// Do CRC check. Return if no match.
+	printf("Phase 2: CRC check.\r\n");
+	calc_crc = crc32((unsigned char *) bitbang_buffer, len);
+	if(crc != calc_crc) {
+		printf("CRC failed (expected %08x, got %08x)\n", crc, calc_crc);
+		return -1;
+	}
 
 	write_to_flash_arb(addr, len, sector_buf_pre, sector_buf_post);
 
