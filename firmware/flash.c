@@ -23,6 +23,8 @@
 static unsigned char bitbang_buffer[128*1024];
 static unsigned char bus_buffer[128*1024];
 static unsigned char xmodem_buffer[1029];
+static unsigned char sector_buf_pre[SPIFLASH_SECTOR_SIZE];
+static unsigned char sector_buf_post[SPIFLASH_SECTOR_SIZE];
 
 typedef struct flash_writer {
 	unsigned char * buf;
@@ -154,17 +156,66 @@ int write_xmodem(unsigned long addr, unsigned long len, unsigned long crc) {
 		return -1;
 	}
 
-	memcpy(bus_buffer, (void *) FLASH_BOOT_ADDRESS, len);
+	// Do CRC check. Return if no match.
 
+	printf("Phase 3: Erase flash region.\r\n");
+	/* All end ptrs are "one past the last byte used for data of the
+	previous start ptr". */
+	unsigned int erase_addr = addr;
+	unsigned int erase_end = erase_addr + len;
+	unsigned int sector_start = erase_addr & ~(SPIFLASH_SECTOR_SIZE - 1);
+	unsigned int sector_end = (erase_end & ~(SPIFLASH_SECTOR_SIZE - 1)) + SPIFLASH_SECTOR_SIZE;
+	unsigned int prepend_len = erase_addr - sector_start;
+	unsigned int append_len = sector_end - erase_end;
+
+	memcpy(sector_buf_pre, (void *) sector_start, prepend_len);
+	memcpy(sector_buf_post, (void *) erase_end, append_len);
+	erase_flash_sector(sector_start);
+	printf("Write leading data.\r\n");
+	write_to_flash(sector_start, sector_buf_pre, prepend_len);
+	flush_cpu_dcache();
+
+	unsigned int middle_sectors = sector_start + SPIFLASH_SECTOR_SIZE;
+
+	while(middle_sectors < sector_end) {
+		erase_flash_sector(middle_sectors);
+		middle_sectors += SPIFLASH_SECTOR_SIZE;
+	}
+
+	printf("Write trailing data.\r\n");
+	write_to_flash(erase_end, sector_buf_post, append_len);
+	flush_cpu_dcache();
+
+	printf("Phase 4: Writing new data to flash.\r\n");
+	write_to_flash(addr, (unsigned char *) bitbang_buffer, len);
+	flush_cpu_dcache();
+
+	memcpy(bus_buffer, (void *) addr, len);
+	printf("Phase 5: Comparing memory bus to received data.\r\n");
 	for(unsigned int count = 0; count < len; count++) {
 		if(bus_buffer[count] != bitbang_buffer[count]) {
-			wprintf("Comparison failed at offset %X\r\n", count)
+			printf("Comparison failed at offset %X\r\n", count);
+			mr((unsigned int) &bus_buffer[count], 512);
+			mr((unsigned int) &bitbang_buffer[count], 512);
 			return -2;
 		}
 	}
 
-	mr((unsigned int) &bus_buffer[0], 512);
-	mr((unsigned int) &bitbang_buffer[0], 512);
+	/* Phase 6 comparison. */
+	memset(bitbang_buffer, '\0', len);
+	printf("Phase 6: Comparing memory bus to bitbang reads.\r\n");
+	read_from_flash(addr, (unsigned char *) bitbang_buffer, len);
+	for(unsigned int count = 0; count < len; count++) {
+		if(bus_buffer[count] != bitbang_buffer[count]) {
+			printf("Comparison failed at offset %X\r\n", count);
+			mr((unsigned int) &bus_buffer[count], 512);
+			mr((unsigned int) &bitbang_buffer[count], 512);
+			return -2;
+		}
+	}
+
+	flush_cpu_dcache();
+	mr(addr, 512);
 
 	return 0;
 }
