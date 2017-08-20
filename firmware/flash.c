@@ -20,8 +20,8 @@
 
 #define test_size 1024
 
-static unsigned char __attribute__ ((section ("main_ram"))) bitbang_buffer[128*1024];
-static unsigned char __attribute__ ((section ("main_ram"))) bus_buffer[128*1024];
+static unsigned char bitbang_buffer[128*1024];
+static unsigned char bus_buffer[128*1024];
 static unsigned char xmodem_buffer[1029];
 
 typedef struct flash_writer {

@@ -47,7 +47,7 @@ SECTIONS
 		. = ALIGN(4);
 		_ebss = .;
 		_end = .;
-	} > sram
+	} > main_ram
 }
 
 PROVIDE(_fstack = ORIGIN(sram) + LENGTH(sram) - 4);
