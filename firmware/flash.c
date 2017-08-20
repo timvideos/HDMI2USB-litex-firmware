@@ -146,18 +146,19 @@ int write_xmodem(unsigned long addr, unsigned long len) {
 	flash_writer_t writer = { bitbang_buffer, len, 0, sizeof(bitbang_buffer)/sizeof(bitbang_buffer[0]) };
 	serial_handle_t uart;
 
-	char dummy;
+	//if(addr < FLASH_BOOT_ADDRESS || addr > )
 
 	serial_init(0, 0, &uart);
-	serial_flush(uart);
-	int xrc = xmodem_rx(write_to_buf, xmodem_buffer, &writer, uart, XMODEM_1K);
+	int rc = xmodem_rx(write_to_buf, xmodem_buffer, &writer, uart, XMODEM_1K);
+	serial_close(&uart);
 
-	/* char data[] = "C";
-	for(int count = 0; count < 10; count++)
-	{
-		serial_rcv(&dummy, 1, 1, NULL, uart);
-		serial_snd(data, 1, uart);
-	} */
+	if(rc != MODEM_NO_ERRORS) {
+		return -1;
+	}
+
+	memcpy(bus_buffer, (void *) FLASH_BOOT_ADDRESS, len);
+	mr((unsigned int) &bus_buffer[0], 512);
+	mr((unsigned int) &bitbang_buffer[0], 512);
 
 	return 0;
 }

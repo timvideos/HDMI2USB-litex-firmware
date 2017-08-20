@@ -1041,6 +1041,8 @@ static void write_spi(char* str)
 		wprintf("CRC error transmitting firmware.\r\n");
 	else if(rc == -2)
 		wprintf("Flash comparison with in-memory image failed.\r\n");
+	else
+		wprintf("Unspecified error: %d\r\n", rc);
 
 	return;
 }
