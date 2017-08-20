@@ -996,6 +996,7 @@ static void write_spi(char* str)
 {
 	char *token;
 	int rc;
+	char * endptr;
 	unsigned long addr;
 	unsigned long len;
 	unsigned long crc;
@@ -1005,26 +1006,44 @@ static void write_spi(char* str)
 
 	if(strcmp(token, "xmodem") == 0) {
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
-		addr = atoi(token);
+		addr = strtoul(token, &endptr, 0);
+		if(*endptr != '\0') {
+			wprintf("Invalid chars in address.");
+		}
 
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
-		len = atoi(token);
+		len = strtoul(token, &endptr, 0);
+		if(*endptr != '\0') {
+			wprintf("Invalid chars in length.");
+		}
 
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
-		crc = atoi(token);
+		crc = strtoul(token, &endptr, 0);
+		if(*endptr != '\0') {
+			wprintf("Invalid chars in CRC.");
+		}
 
-		wprintf("Will use xmodem with addr %lX, len %ld.\r\n", addr, len);
+		wprintf("Will use xmodem with addr %lX, len %ld and crc %lX.\r\n", addr, len, crc);
 		rc = write_xmodem(addr, len, crc);
 	}
 	else if(strcmp(token, "sfl") == 0) {
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
-		addr = atoi(token);
+		addr = strtoul(token, &endptr, 0);
+		if(*endptr != '\0') {
+			wprintf("Invalid chars in address.");
+		}
 
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
-		len = atoi(token);
+		len = strtoul(token, &endptr, 0);
+		if(*endptr != '\0') {
+			wprintf("Invalid chars in length.");
+		}
 
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
-		crc = atoi(token);
+		crc = strtoul(token, &endptr, 0);
+		if(*endptr != '\0') {
+			wprintf("Invalid chars in CRC.");
+		}
 
 		wprintf("Will use sfl with addr %lX, len %ld, and crc %lX.\r\n", addr, len, crc);
 		rc = write_sfl(addr, len, crc);

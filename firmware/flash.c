@@ -159,6 +159,14 @@ int write_xmodem(unsigned long addr, unsigned long len, unsigned long crc) {
 	}
 
 	memcpy(bus_buffer, (void *) FLASH_BOOT_ADDRESS, len);
+
+	for(unsigned int count = 0; count < len; count++) {
+		if(bus_buffer[count] != bitbang_buffer[count]) {
+			wprintf("Comparison failed at offset %X\r\n", count)
+			return -2;
+		}
+	}
+
 	mr((unsigned int) &bus_buffer[0], 512);
 	mr((unsigned int) &bitbang_buffer[0], 512);
 
