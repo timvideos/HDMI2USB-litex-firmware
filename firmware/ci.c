@@ -1010,12 +1010,11 @@ static void write_spi(char* str)
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
 		len = atoi(token);
 
-		// Get CRC anyway to consume the entire line just in case, but ignore it.
-		get_token(&str);
-		(void) crc;
+		NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
+		crc = atoi(token);
 
 		wprintf("Will use xmodem with addr %lX, len %ld.\r\n", addr, len);
-		rc = write_xmodem(addr, len);
+		rc = write_xmodem(addr, len, crc);
 	}
 	else if(strcmp(token, "sfl") == 0) {
 		NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");

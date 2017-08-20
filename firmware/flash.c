@@ -142,10 +142,12 @@ int write_to_buf(const char * buf, const int buf_size, const int eof, void * con
 	return size_sent;
 }
 
-int write_xmodem(unsigned long addr, unsigned long len) {
-	flash_writer_t writer = { bitbang_buffer, len, 0, sizeof(bitbang_buffer)/sizeof(bitbang_buffer[0]) };
+int write_xmodem(unsigned long addr, unsigned long len, unsigned long crc) {
+	flash_writer_t writer = { bitbang_buffer + 8, len, 0, sizeof(bitbang_buffer)/sizeof(bitbang_buffer[0]) };
 	serial_handle_t uart;
 
+	memcpy((void *) bitbang_buffer + 0, &len, sizeof(unsigned int));
+	memcpy((void *) bitbang_buffer + 4, &crc, sizeof(unsigned int));
 	//if(addr < FLASH_BOOT_ADDRESS || addr > )
 
 	serial_init(0, 0, &uart);
