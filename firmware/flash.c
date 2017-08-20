@@ -34,6 +34,7 @@ typedef struct flash_writer {
 } flash_writer_t;
 
 int write_to_buf(const char * buf, const int buf_size, const int eof, void * const chan_state);
+static void write_to_flash_arb(unsigned int addr, unsigned int len, unsigned char * prepend_buf, unsigned char * append_buf);
 
 #define NUMBER_OF_BYTES_ON_A_LINE 16
 static void dump_bytes(unsigned int *ptr, int count, unsigned addr)
@@ -158,37 +159,7 @@ int write_xmodem(unsigned long addr, unsigned long len, unsigned long crc) {
 
 	// Do CRC check. Return if no match.
 
-	printf("Phase 3: Erase flash region.\r\n");
-	/* All end ptrs are "one past the last byte used for data of the
-	previous start ptr". */
-	unsigned int erase_addr = addr;
-	unsigned int erase_end = erase_addr + len;
-	unsigned int sector_start = erase_addr & ~(SPIFLASH_SECTOR_SIZE - 1);
-	unsigned int sector_end = (erase_end & ~(SPIFLASH_SECTOR_SIZE - 1)) + SPIFLASH_SECTOR_SIZE;
-	unsigned int prepend_len = erase_addr - sector_start;
-	unsigned int append_len = sector_end - erase_end;
-
-	memcpy(sector_buf_pre, (void *) sector_start, prepend_len);
-	memcpy(sector_buf_post, (void *) erase_end, append_len);
-	erase_flash_sector(sector_start);
-	printf("Write leading data.\r\n");
-	write_to_flash(sector_start, sector_buf_pre, prepend_len);
-	flush_cpu_dcache();
-
-	unsigned int middle_sectors = sector_start + SPIFLASH_SECTOR_SIZE;
-
-	while(middle_sectors < sector_end) {
-		erase_flash_sector(middle_sectors);
-		middle_sectors += SPIFLASH_SECTOR_SIZE;
-	}
-
-	printf("Write trailing data.\r\n");
-	write_to_flash(erase_end, sector_buf_post, append_len);
-	flush_cpu_dcache();
-
-	printf("Phase 4: Writing new data to flash.\r\n");
-	write_to_flash(addr, (unsigned char *) bitbang_buffer, len);
-	flush_cpu_dcache();
+	write_to_flash_arb(addr, len, sector_buf_pre, sector_buf_post);
 
 	memcpy(bus_buffer, (void *) addr, len);
 	printf("Phase 5: Comparing memory bus to received data.\r\n");
@@ -222,6 +193,40 @@ int write_xmodem(unsigned long addr, unsigned long len, unsigned long crc) {
 
 int write_sfl(unsigned long addr, unsigned long len, unsigned long crc) {
 	return 0;
+}
+
+static void write_to_flash_arb(unsigned int addr, unsigned int len, unsigned char * prepend_buf, unsigned char * append_buf) {
+	printf("Phase 3: Erase flash region.\r\n");
+	/* All end ptrs are "one past the last byte used for data of the
+	previous start ptr". */
+	unsigned int erase_addr = addr;
+	unsigned int erase_end = erase_addr + len;
+	unsigned int sector_start = erase_addr & ~(SPIFLASH_SECTOR_SIZE - 1);
+	unsigned int sector_end = (erase_end & ~(SPIFLASH_SECTOR_SIZE - 1)) + SPIFLASH_SECTOR_SIZE;
+	unsigned int prepend_len = erase_addr - sector_start;
+	unsigned int append_len = sector_end - erase_end;
+
+	memcpy(prepend_buf, (void *) sector_start, prepend_len);
+	memcpy(append_buf, (void *) erase_end, append_len);
+	erase_flash_sector(sector_start);
+	printf("Write leading data.\r\n");
+	write_to_flash(sector_start, prepend_buf, prepend_len);
+	flush_cpu_dcache();
+
+	unsigned int middle_sectors = sector_start + SPIFLASH_SECTOR_SIZE;
+
+	while(middle_sectors < sector_end) {
+		erase_flash_sector(middle_sectors);
+		middle_sectors += SPIFLASH_SECTOR_SIZE;
+	}
+
+	printf("Write trailing data.\r\n");
+	write_to_flash(erase_end, append_buf, append_len);
+	flush_cpu_dcache();
+
+	printf("Phase 4: Writing new data to flash.\r\n");
+	write_to_flash(addr, (unsigned char *) bitbang_buffer, len);
+	flush_cpu_dcache();
 }
 
 

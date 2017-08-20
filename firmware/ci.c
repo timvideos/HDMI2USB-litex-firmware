@@ -995,63 +995,57 @@ static void debug_ddr(void)
 static void write_spi(char* str)
 {
 	char *token;
-	int rc;
+	int rc = 0;
 	char * endptr;
 	unsigned long addr;
 	unsigned long len;
 	unsigned long crc;
-
+	int use_xmodem = 0, use_sfl = 0;
+	char * proto_str;
 
 	token = get_token(&str);
 
 	if(strcmp(token, "xmodem") == 0) {
-		NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
-		addr = strtoul(token, &endptr, 0);
-		if(*endptr != '\0') {
-			wprintf("Invalid chars in address.");
-		}
-
-		NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
-		len = strtoul(token, &endptr, 0);
-		if(*endptr != '\0') {
-			wprintf("Invalid chars in length.");
-		}
-
-		NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
-		crc = strtoul(token, &endptr, 0);
-		if(*endptr != '\0') {
-			wprintf("Invalid chars in CRC.");
-		}
-
-		wprintf("Will use xmodem with addr %lX, len %ld and crc %lX.\r\n", addr, len, crc);
-		rc = write_xmodem(addr, len, crc);
+		use_xmodem = 1;
+		proto_str = "xmodem";
 	}
 	else if(strcmp(token, "sfl") == 0) {
-		NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
-		addr = strtoul(token, &endptr, 0);
-		if(*endptr != '\0') {
-			wprintf("Invalid chars in address.");
-		}
-
-		NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
-		len = strtoul(token, &endptr, 0);
-		if(*endptr != '\0') {
-			wprintf("Invalid chars in length.");
-		}
-
-		NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
-		crc = strtoul(token, &endptr, 0);
-		if(*endptr != '\0') {
-			wprintf("Invalid chars in CRC.");
-		}
-
-		wprintf("Will use sfl with addr %lX, len %ld, and crc %lX.\r\n", addr, len, crc);
-		rc = write_sfl(addr, len, crc);
+		use_sfl = 1;
+		proto_str = "sfl";
 	}
 	else {
 		wprintf("Protocol not supported.\r\n");
 		return;
 	}
+
+	NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
+	addr = strtoul(token, &endptr, 0);
+	if(*endptr != '\0') {
+		wprintf("Invalid chars in address.");
+		return;
+	}
+
+	NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
+	len = strtoul(token, &endptr, 0);
+	if(*endptr != '\0') {
+		wprintf("Invalid chars in length.");
+		return;
+	}
+
+	NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
+	crc = strtoul(token, &endptr, 0);
+	if(*endptr != '\0') {
+		wprintf("Invalid chars in CRC.");
+		return;
+	}
+
+	wprintf("Will use %s with addr %lX, len %ld and crc %lX.\r\n", proto_str, addr, len, crc);
+	if(use_xmodem)
+		rc = write_xmodem(addr, len, crc);
+	else if(use_sfl)
+		rc = write_sfl(addr, len, crc);
+	else
+		rc = -3;
 
 	if(rc == 0)
 		wprintf("New firmware written successfully.\r\n");
