@@ -136,7 +136,7 @@ int write_to_buf(const char * buf, const int buf_size, const int eof, void * con
 	int space_left = writer->buflen - writer->bufpos;
 
 	int size_sent = space_left < buf_size ? space_left : buf_size;
-	memcpy(writer->buf, buf, size_sent);
+	memcpy(writer->buf + writer->bufpos, buf, size_sent);
 
 	writer->bufpos += size_sent;
 	return size_sent;
