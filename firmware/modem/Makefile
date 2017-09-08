@@ -5,13 +5,13 @@ VPATH=$(MODEM_DIRECTORY)
 
 include $(MODEM_DIRECTORY)/Makefile.mk
 
-libmodem.a: $(LIBMODEMDIR)/build.ninja ninja-hack
+libmodem.a: build.ninja ninja-hack
 	ninja -f $<
 
 # meson doesn't understand vpath
 REALSRCDIR=$(MODEM_DIRECTORY)/$(LIBMODEMDIR)
 
-$(LIBMODEMDIR)/build.ninja: $(LIBMODEMDIR)/meson.build $(LIBMODEMDIR)/targets/hdmi2usb-$(CPU).txt
-	meson.py $(LIBMODEMDIR) $(REALSRCDIR) --cross-file=$(REALSRCDIR)/targets/hdmi2usb-$(CPU).txt
+build.ninja: $(LIBMODEMDIR)/meson.build $(LIBMODEMDIR)/targets/hdmi2usb-$(CPU).txt
+	meson.py . $(REALSRCDIR) -Dhdmi2usb_dir=$(BUILDINC_DIRECTORY)/../.. --cross-file=$(REALSRCDIR)/targets/hdmi2usb-$(CPU).txt
 
 .PHONY: ninja-hack
