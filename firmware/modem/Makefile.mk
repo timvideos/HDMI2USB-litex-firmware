@@ -2,4 +2,4 @@ LIBMODEMDIR=../../third_party/libmodem
 MODEMDIR=.
 
 CFLAGS += \
-	-I$(MODEMDIR)/$(LIBMODEMDIR)/src
+	-I$(MODEM_DIRECTORY)/$(LIBMODEMDIR)/src

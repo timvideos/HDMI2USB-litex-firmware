@@ -203,7 +203,6 @@ firmware-clear: firmware-clear-$(PLATFORM)
 .PHONY: firmware-load-$(PLATFORM) firmware-flash-$(PLATFORM) firmware-connect-$(PLATFORM) firmware-clear-$(PLATFORM)
 
 firmware-clean:
-	cd third_party/libmodem && scons TARGET_OS=hdmi2usb-lm32 HDMI2USB_BUILD=$(PWD)/$(TARGET_BUILD_DIR) -c
 	rm -rf $(TARGET_BUILD_DIR)/software
 
 .PHONY: firmware-cmd $(FIRMWARE_FILEBASE).bin firmware firmware-load firmware-flash firmware-connect firmware-clean
@@ -358,7 +357,6 @@ reset: reset-$(PLATFORM)
 
 clean:
 	rm build/cache.mk
-	cd third_party/libmodem && scons TARGET_OS=hdmi2usb-lm32 HDMI2USB_BUILD=$(PWD)/$(TARGET_BUILD_DIR) -c
 	rm -rf $(TARGET_BUILD_DIR)
 	py3clean . || rm -rf $$(find -name __pycache__)
 
