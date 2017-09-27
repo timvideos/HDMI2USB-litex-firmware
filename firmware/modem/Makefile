@@ -12,6 +12,6 @@ libmodem.a: build.ninja ninja-hack
 REALSRCDIR=$(MODEM_DIRECTORY)/$(LIBMODEMDIR)
 
 build.ninja: $(LIBMODEMDIR)/meson.build $(LIBMODEMDIR)/targets/hdmi2usb-$(CPU).txt
-	meson.py . $(REALSRCDIR) -Dhdmi2usb_dir=$(BUILDINC_DIRECTORY)/../.. --cross-file=$(REALSRCDIR)/targets/hdmi2usb-$(CPU).txt
+	meson.py . $(REALSRCDIR) -Db_staticpic=false -Dhdmi2usb_dir=$(BUILDINC_DIRECTORY)/../.. --cross-file=$(REALSRCDIR)/targets/hdmi2usb-$(CPU).txt
 
 .PHONY: ninja-hack
