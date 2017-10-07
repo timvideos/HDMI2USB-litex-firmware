@@ -41,6 +41,7 @@ OBJECTS=\
 	pll.o \
 	processor.o \
 	reboot.o \
+	spiflash.o \
 	stdio_wrap.o \
 	telnet.o \
 	tofe_eeprom.o \

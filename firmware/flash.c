@@ -1,6 +1,7 @@
 #include <generated/csr.h>
 #include <generated/mem.h>
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+#include "spiflash.h"
 #include "flash.h"
 
 #include <stdio.h>
@@ -11,7 +12,6 @@
 #include <uart.h>
 #include <time.h>
 #include <console.h>
-#include <spiflash.h>
 #include <crc.h>
 #include <system.h>
 #include "ci.h"
