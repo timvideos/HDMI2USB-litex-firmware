@@ -7,6 +7,9 @@ endif
 PYTHON ?= python
 export PYTHON
 
+MESON ?= meson
+export MESON
+
 PLATFORM ?= opsis
 export PLATFORM
 # Default board
