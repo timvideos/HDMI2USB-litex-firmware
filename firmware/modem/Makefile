@@ -12,6 +12,10 @@ libmodem.a: build.ninja ninja-hack
 REALSRCDIR=$(MODEM_DIRECTORY)/$(LIBMODEMDIR)
 
 build.ninja: $(LIBMODEMDIR)/meson.build $(LIBMODEMDIR)/targets/hdmi2usb-$(CPU).txt
-	$(MESON) . $(REALSRCDIR) -Db_staticpic=false -Dhdmi2usb_dir=$(BUILDINC_DIRECTORY)/../.. --cross-file=$(REALSRCDIR)/targets/hdmi2usb-$(CPU).txt
+	# If $CC was exported at all from a parent, make will set it to $(CC_quiet).
+	# This will confuse meson and cause the build to fail, so set it to a dummy
+	# value for the time being. Since this is a cross-build, cc won't be used
+	# after meson runs.
+	CC=cc $(MESON) . $(REALSRCDIR) -Db_staticpic=false -Dhdmi2usb_dir=$(BUILDINC_DIRECTORY)/../.. --cross-file=$(REALSRCDIR)/targets/hdmi2usb-$(CPU).txt
 
 .PHONY: ninja-hack
