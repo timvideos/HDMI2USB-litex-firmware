@@ -85,6 +85,7 @@ void flash_test(void) {
 	mr(0x20000000, test_size);
 }
 
+#ifdef FLASH_BOOT_ADDRESS
 void bitbang_test(void) {
 	unsigned int *flashbase;
 	unsigned int length;
@@ -122,6 +123,7 @@ void bitbang_test(void) {
 
 	erase_flash_sector((unsigned int) free_start);
 }
+#endif
 
 
 // XMODEM:

@@ -175,7 +175,7 @@ static void help_debug(void)
 #endif
 	wputs("  debug dna                      - show Board's DNA");
 	wputs("  debug edid                     - dump monitor EDID");
-#ifdef CSR_SPIFLASH_BASE
+#if defined(CSR_SPIFLASH_BASE) && defined(FLASH_BOOT_ADDRESS)
 	wputs("  debug spiflash                 - test bitbang write");
 #endif
 #ifdef CSR_CAS_BASE
@@ -1358,7 +1358,7 @@ void ci_service(void)
 #endif
 			if(found == 0)
 				wprintf("%s port has no EDID capabilities\r\n", token);
-#ifdef CSR_SPIFLASH_BASE
+#if defined(CSR_SPIFLASH_BASE) && defined(FLASH_BOOT_ADDRESS)
 		} else if(strcmp(token, "spiflash") == 0) {
 				bitbang_test();
 #endif
