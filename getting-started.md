@@ -110,6 +110,7 @@ development environment.
 Set the type of board you want to use.
 ```
 export PLATFORM=opsis
+export TARGET=hdmi2usb
 ```
 
 Set-up the environment:
@@ -121,7 +122,7 @@ source scripts/enter-env.sh
 If your environment is set up correctly your prompt should change to look
 something like:
 ```
-(H2U P=opsis) #
+(LX P=opsis T=hdmi2usb) #
 ```
 
 If your prompt does not change, then check the output to see whether there are
