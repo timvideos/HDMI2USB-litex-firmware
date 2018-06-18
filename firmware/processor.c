@@ -704,14 +704,14 @@ void processor_update(void)
 #ifdef CSR_HDMI_IN0_BASE
 	if(processor_hdmi_out0_source == VIDEO_IN_HDMI_IN0)
 	{
-		crop_service(hdmi_in0_framebuffer_base(hdmi_in0_fb_index),40,40,40,40);
+		crop_service(hdmi_in0_framebuffer_base(hdmi_in0_fb_index),40);
 		hdmi_out0_core_initiator_base_write(hdmi_in0_framebuffer_base(hdmi_in0_fb_index));
 	}	
 #endif
 #ifdef CSR_HDMI_IN1_BASE
 	if(processor_hdmi_out0_source == VIDEO_IN_HDMI_IN1)
 	{
-		crop_service(hdmi_in1_framebuffer_base(hdmi_in1_fb_index),40,40,40,40);
+		crop_service(hdmi_in1_framebuffer_base(hdmi_in1_fb_index),40);
 		hdmi_out0_core_initiator_base_write(hdmi_in1_framebuffer_base(hdmi_in1_fb_index));
 	}
 #endif
@@ -750,9 +750,7 @@ void processor_update(void)
 		encoder_reader_base_write(pattern_framebuffer_base());
 #endif
 
-//	crop_service(hdmi_in0_framebuffer_base(hdmi_in0_fb_index),40,40,40,40);
-//	crop_service(hdmi_in1_framebuffer_base(hdmi_in1_fb_index),40,40,40,40);
-	crop_service(pattern_framebuffer_base(),40,40,40,40);
+	crop_service(pattern_framebuffer_base(),40);
 
 #ifdef CSR_HDMI_IN0_BASE
 	hb_service(hdmi_in0_framebuffer_base(hdmi_in0_fb_index));

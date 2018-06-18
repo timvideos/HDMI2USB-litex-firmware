@@ -5,7 +5,6 @@
 #include "framebuffer.h"
 
 void crop_status(bool val);
-void crop_service(fb_ptrdiff_t fb_offset,int top,int bottom,int left,int right) ;
-void crop_fill(bool color_v, fb_ptrdiff_t fb_offset,int top,int bottom,int left,int right);
+void crop_service(fb_ptrdiff_t fb_offset,int top) ;
+void crop_fill(bool color_v, fb_ptrdiff_t fb_offset,int top);
 
-#endif /* __HEARTBEAT_H */

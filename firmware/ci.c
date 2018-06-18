@@ -99,10 +99,9 @@ static void help_heartbeat(void)
 
 static void help_crop(void)
 {
-        wputs("change crop status (alias: 'cr')");
-        wputs("  crop <on/off>             - Turn on/off crop feature");
+	wputs("change crop status (alias: 'cr')");
+	wputs("  crop <on/off>             - Turn on/off crop feature");
 }
-
 
 static void heartbeat_enable(void)
 {
@@ -116,21 +115,17 @@ static void crop_enable(void)
 	wprintf("crop enable\n");
 }
 
-
 static void heartbeat_disable(void)
 {
 	hb_status(false);
 	wprintf("Heartbeat disabled\n");
 }
 
-
 static void crop_disable(void)
 {
-
-       	crop_status(false);
-        wprintf("crop disabled\n");
+	crop_status(false);
+	wprintf("crop disabled\n");
 }
-
 
 #ifdef CSR_HDMI_OUT0_BASE
 static void help_output0(void)
@@ -226,8 +221,8 @@ static void ci_help(void)
 	wputs("");
 	help_hdp_toggle();
 	wputs("");
- help_crop();
-        wputs("");
+	help_crop();
+	wputs("");
 
 #ifdef CSR_HDMI_OUT0_BASE
 	help_output0();
@@ -381,23 +376,23 @@ static void status_short_print(void)
 	unsigned int underflows;
 #ifdef CSR_HDMI_IN0_BASE
 	wprintf(
-		"in0: %dx%d",
-		hdmi_in0_resdetection_hres_read(),
-		hdmi_in0_resdetection_vres_read());
+			"in0: %dx%d",
+			hdmi_in0_resdetection_hres_read(),
+			hdmi_in0_resdetection_vres_read());
 #ifdef CSR_HDMI_IN0_FREQ_BASE
 	wprintf("@" REFRESH_RATE_PRINTF "MHz, ",
-		REFRESH_RATE_PRINTF_ARGS(hdmi_in0_freq_value_read() / 10000));
+			REFRESH_RATE_PRINTF_ARGS(hdmi_in0_freq_value_read() / 10000));
 #endif
 #endif
 
 #ifdef CSR_HDMI_IN1_BASE
 	wprintf(
-		"in1: %dx%d",
-		hdmi_in1_resdetection_hres_read(),
-		hdmi_in1_resdetection_vres_read());
+			"in1: %dx%d",
+			hdmi_in1_resdetection_hres_read(),
+			hdmi_in1_resdetection_vres_read());
 #ifdef CSR_HDMI_IN1_FREQ_BASE
 	wprintf("@" REFRESH_RATE_PRINTF "MHz, ",
-		REFRESH_RATE_PRINTF_ARGS(hdmi_in1_freq_value_read() / 10000));
+			REFRESH_RATE_PRINTF_ARGS(hdmi_in1_freq_value_read() / 10000));
 #endif
 #endif
 
@@ -408,12 +403,12 @@ static void status_short_print(void)
 		hdmi_out0_core_underflow_update_write(1);
 		underflows = hdmi_out0_core_underflow_counter_read();
 		wprintf(
-			"%dx%d@" REFRESH_RATE_PRINTF "Hz %s (uf:%d), ",
-			processor_h_active,
-			processor_v_active,
-			REFRESH_RATE_PRINTF_ARGS(processor_refresh),
-			processor_get_source_name(processor_hdmi_out0_source),
-			underflows);
+				"%dx%d@" REFRESH_RATE_PRINTF "Hz %s (uf:%d), ",
+				processor_h_active,
+				processor_v_active,
+				REFRESH_RATE_PRINTF_ARGS(processor_refresh),
+				processor_get_source_name(processor_hdmi_out0_source),
+				underflows);
 		hdmi_out0_core_underflow_enable_write(0);
 		hdmi_out0_core_underflow_enable_write(1);
 	} else
@@ -427,12 +422,12 @@ static void status_short_print(void)
 		hdmi_out1_core_underflow_update_write(1);
 		underflows = hdmi_out1_core_underflow_counter_read();
 		wprintf(
-			"%dx%d@" REFRESH_RATE_PRINTF "Hz %s (uf:%d) ",
-			processor_h_active,
-			processor_v_active,
-			REFRESH_RATE_PRINTF_ARGS(processor_refresh),
-			processor_get_source_name(processor_hdmi_out1_source),
-			underflows);
+				"%dx%d@" REFRESH_RATE_PRINTF "Hz %s (uf:%d) ",
+				processor_h_active,
+				processor_v_active,
+				REFRESH_RATE_PRINTF_ARGS(processor_refresh),
+				processor_get_source_name(processor_hdmi_out1_source),
+				underflows);
 		hdmi_out1_core_underflow_enable_write(0);
 		hdmi_out1_core_underflow_enable_write(1);
 	} else
@@ -442,9 +437,9 @@ static void status_short_print(void)
 	wprintf("\nstatus2: ");
 	wprintf("EDID: ");
 	wprintf("%dx%d@" REFRESH_RATE_PRINTF "Hz/",
-		processor_h_active,
-		processor_v_active,
-		REFRESH_RATE_PRINTF_ARGS(processor_refresh));
+			processor_h_active,
+			processor_v_active,
+			REFRESH_RATE_PRINTF_ARGS(processor_refresh));
 
 	if (processor_secondary_mode == EDID_SECONDARY_MODE_OFF) {
 		wprintf("off, ");
@@ -459,12 +454,12 @@ static void status_short_print(void)
 	wprintf("enc: ");
 	if(encoder_enabled) {
 		wprintf(
-			"%dx%d@%dfps %s (q:%d), ",
-			processor_h_active,
-			processor_v_active,
-			encoder_fps,
-			processor_get_source_name(processor_encoder_source),
-			encoder_quality);
+				"%dx%d@%dfps %s (q:%d), ",
+				processor_h_active,
+				processor_v_active,
+				encoder_fps,
+				processor_get_source_name(processor_encoder_source),
+				encoder_quality);
 	} else
 		wprintf("off, ");
 #endif
@@ -480,12 +475,12 @@ static void status_print(void)
 	unsigned int underflows;
 #ifdef CSR_HDMI_IN0_BASE
 	wprintf(
-		"input0:  %dx%d",
-		hdmi_in0_resdetection_hres_read(),
-		hdmi_in0_resdetection_vres_read());
+			"input0:  %dx%d",
+			hdmi_in0_resdetection_hres_read(),
+			hdmi_in0_resdetection_vres_read());
 #ifdef CSR_HDMI_IN0_FREQ_BASE
 	wprintf(" (@" REFRESH_RATE_PRINTF " MHz)",
-		REFRESH_RATE_PRINTF_ARGS(hdmi_in0_freq_value_read() / 10000));
+			REFRESH_RATE_PRINTF_ARGS(hdmi_in0_freq_value_read() / 10000));
 	if(hdmi_in0_status()) {
 		wprintf(" (capturing)");
 	} else {
@@ -497,12 +492,12 @@ static void status_print(void)
 
 #ifdef CSR_HDMI_IN1_BASE
 	wprintf(
-		"input1:  %dx%d",
-		hdmi_in1_resdetection_hres_read(),
-		hdmi_in1_resdetection_vres_read());
+			"input1:  %dx%d",
+			hdmi_in1_resdetection_hres_read(),
+			hdmi_in1_resdetection_vres_read());
 #ifdef CSR_HDMI_IN1_FREQ_BASE
 	wprintf(" (@" REFRESH_RATE_PRINTF " MHz)",
-		REFRESH_RATE_PRINTF_ARGS(hdmi_in1_freq_value_read() / 10000));
+			REFRESH_RATE_PRINTF_ARGS(hdmi_in1_freq_value_read() / 10000));
 #endif
 	if(hdmi_in1_status()) {
 		wprintf(" (capturing)");
@@ -519,12 +514,12 @@ static void status_print(void)
 		hdmi_out0_core_underflow_update_write(1);
 		underflows = hdmi_out0_core_underflow_counter_read();
 		wprintf(
-			"%dx%d@" REFRESH_RATE_PRINTF "Hz from %s (underflows: %d)",
-			processor_h_active,
-			processor_v_active,
-			REFRESH_RATE_PRINTF_ARGS(processor_refresh),
-			processor_get_source_name(processor_hdmi_out0_source),
-			underflows);
+				"%dx%d@" REFRESH_RATE_PRINTF "Hz from %s (underflows: %d)",
+				processor_h_active,
+				processor_v_active,
+				REFRESH_RATE_PRINTF_ARGS(processor_refresh),
+				processor_get_source_name(processor_hdmi_out0_source),
+				underflows);
 		hdmi_out0_core_underflow_enable_write(0);
 		hdmi_out0_core_underflow_enable_write(1);
 	} else
@@ -539,12 +534,12 @@ static void status_print(void)
 		hdmi_out1_core_underflow_update_write(1);
 		underflows = hdmi_out1_core_underflow_counter_read();
 		wprintf(
-			"%dx%d@" REFRESH_RATE_PRINTF "Hz from %s (underflows: %d)",
-			processor_h_active,
-			processor_v_active,
-			REFRESH_RATE_PRINTF_ARGS(processor_refresh),
-			processor_get_source_name(processor_hdmi_out1_source),
-			underflows);
+				"%dx%d@" REFRESH_RATE_PRINTF "Hz from %s (underflows: %d)",
+				processor_h_active,
+				processor_v_active,
+				REFRESH_RATE_PRINTF_ARGS(processor_refresh),
+				processor_get_source_name(processor_hdmi_out1_source),
+				underflows);
 		hdmi_out1_core_underflow_enable_write(0);
 		hdmi_out1_core_underflow_enable_write(1);
 	} else
@@ -554,9 +549,9 @@ static void status_print(void)
 
 	wprintf("EDID primary mode:   ");
 	wprintf("%dx%d@" REFRESH_RATE_PRINTF "Hz",
-		processor_h_active,
-		processor_v_active,
-		REFRESH_RATE_PRINTF_ARGS(processor_refresh));
+			processor_h_active,
+			processor_v_active,
+			REFRESH_RATE_PRINTF_ARGS(processor_refresh));
 	wputchar('\n');
 
 	wprintf("EDID secondary mode: ");
@@ -574,12 +569,12 @@ static void status_print(void)
 	wprintf("encoder: ");
 	if(encoder_enabled) {
 		wprintf(
-			"%dx%d @ %dfps from %s (q: %d)",
-			processor_h_active,
-			processor_v_active,
-			encoder_fps,
-			processor_get_source_name(processor_encoder_source),
-			encoder_quality);
+				"%dx%d @ %dfps from %s (q: %d)",
+				processor_h_active,
+				processor_v_active,
+				encoder_fps,
+				processor_get_source_name(processor_encoder_source),
+				encoder_quality);
 	} else
 		wprintf("off");
 	wputchar('\n');
@@ -601,7 +596,7 @@ static void status_service(void)
 			wputchar('\n');
 		}
 		if(status_short_enabled) {
-		    status_short_print();
+			status_short_print();
 		}
 	}
 }
@@ -690,13 +685,13 @@ static void video_matrix_connect(int source, int sink)
 #ifdef CSR_HDMI_OUT0_BASE
 				processor_set_hdmi_out0_source(source);
 #else
-				wprintf("hdmi_out0 is missing.\n");
+			wprintf("hdmi_out0 is missing.\n");
 #endif
 			else if(sink == VIDEO_OUT_HDMI_OUT1)
 #ifdef CSR_HDMI_OUT1_BASE
 				processor_set_hdmi_out1_source(source);
 #else
-				wprintf("hdmi_out1 is missing.\n");
+			wprintf("hdmi_out1 is missing.\n");
 #endif
 			processor_update();
 		}
@@ -823,38 +818,38 @@ static void video_mode_custom(char* str)
 	}
 
 	/*
-	 -------------------> Time ------------->
+	   -------------------> Time ------------->
 
-	                  +-------------------+
+	   +-------------------+
 	   Video          |  Blanking         |  Video
-                      |                   |
-	 ----(a)--------->|<-------(b)------->|
-	                  |                   |
-	                  |       +-------+   |
-	                  |       | Sync  |   |
-	                  |       |       |   |
-	                  |<-(c)->|<-(d)->|   |
-	                  |       |       |   |
-	 ----(1)--------->|       |       |   |
-	 ----(2)----------------->|       |   |
-	 ----(3)------------------------->|   |
-	 ----(4)----------------------------->|
-	                  |       |       |   |
-	 -----------------\                   /--------
-	                  |                   |
-	                  \-------\       /---/
-	                          |       |
-	                          \-------/
+	   |                   |
+	   ----(a)--------->|<-------(b)------->|
+	   |                   |
+	   |       +-------+   |
+	   |       | Sync  |   |
+	   |       |       |   |
+	   |<-(c)->|<-(d)->|   |
+	   |       |       |   |
+	   ----(1)--------->|       |       |   |
+	   ----(2)----------------->|       |   |
+	   ----(3)------------------------->|   |
+	   ----(4)----------------------------->|
+	   |       |       |   |
+	   -----------------\                   /--------
+	   |                   |
+	   \-------\       /---/
+	   |       |
+	   \-------/
 
-	 (a) - h_active
-	 (b) - h_blanking
-	 (c) - h_sync_offset
-	 (d) - h_sync_width
-	 (1) - HDisp / width
-	 (2) - HSyncStart
-	 (3) - HSyncEnd
-	 (4) - HTotal
-	*/
+	   (a) - h_active
+	   (b) - h_blanking
+	   (c) - h_sync_offset
+	   (d) - h_sync_width
+	   (1) - HDisp / width
+	   (2) - HSyncStart
+	   (3) - HSyncEnd
+	   (4) - HTotal
+	 */
 
 	if (hTotal <= hSyncEnd || hSyncEnd <= hSyncStart ||
 			hSyncStart <= width || vTotal <= vSyncEnd ||
@@ -1013,20 +1008,20 @@ static unsigned int log2(unsigned int v)
 static void debug_ddr(void)
 {
 	/*
-	unsigned long long int nr, nw;
-	unsigned long long int f;
-	unsigned int rdb, wrb;
-	unsigned int burstbits;
+	   unsigned long long int nr, nw;
+	   unsigned long long int f;
+	   unsigned int rdb, wrb;
+	   unsigned int burstbits;
 
-	sdram_controller_bandwidth_update_write(1);
-	nr = sdram_controller_bandwidth_nreads_read();
-	nw = sdram_controller_bandwidth_nwrites_read();
-	f = SYSTEM_CLOCK_FREQUENCY;
-	burstbits = (2*DFII_NPHASES) << DFII_PIX_DATA_SIZE;
-	rdb = (nr*f >> (24 - log2(burstbits)))/1000000ULL;
-	wrb = (nw*f >> (24 - log2(burstbits)))/1000000ULL;
-	wprintf("read:%5dMbps  write:%5dMbps  all:%5dMbps\n", rdb, wrb, rdb + wrb);
-	*/
+	   sdram_controller_bandwidth_update_write(1);
+	   nr = sdram_controller_bandwidth_nreads_read();
+	   nw = sdram_controller_bandwidth_nwrites_read();
+	   f = SYSTEM_CLOCK_FREQUENCY;
+	   burstbits = (2*DFII_NPHASES) << DFII_PIX_DATA_SIZE;
+	   rdb = (nr*f >> (24 - log2(burstbits)))/1000000ULL;
+	   wrb = (nw*f >> (24 - log2(burstbits)))/1000000ULL;
+	   wprintf("read:%5dMbps  write:%5dMbps  all:%5dMbps\n", rdb, wrb, rdb + wrb);
+	 */
 }
 #endif
 
@@ -1162,17 +1157,15 @@ void ci_service(void)
 		hdp_toggle(atoi(token));
 	}
 
-
- else if((strcmp(token, "crop") == 0) || (strcmp(token, "cr") == 0)) {
-                token = get_token(&str);
-                if((strcmp(token, "on") == 0) )
-
-                        crop_enable();
-                else if((strcmp(token, "off") == 0) )
-                        crop_disable();
-                else
-                        help_crop();
-        }
+	else if((strcmp(token, "crop") == 0) || (strcmp(token, "cr") == 0)) {
+		token = get_token(&str);
+		if((strcmp(token, "on") == 0) )
+			crop_enable();
+		else if((strcmp(token, "off") == 0) )
+			crop_disable();
+		else
+			help_crop();
+	}
 
 #ifdef CSR_HDMI_OUT0_BASE
 	else if((strcmp(token, "output0") == 0) || (strcmp(token, "o0") == 0)) {
