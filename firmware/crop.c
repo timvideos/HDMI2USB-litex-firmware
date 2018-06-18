@@ -41,7 +41,6 @@ void crop_fill(bool color_v, fb_ptrdiff_t fb_offset,int top)
 	addr3 = 0 + (processor_h_active/2)*top + (processor_h_active/2) - top;
 	addr4 = 0 + (processor_h_active/2)*top;
 
-
 	for (i=0; i<processor_h_active/2; i++)
 	{
 		for (j=0; j<processor_v_active - top; j++)
