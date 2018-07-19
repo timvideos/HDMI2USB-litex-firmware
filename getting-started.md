@@ -371,7 +371,6 @@ changing resolution:
 ```
 hdmi2usb-mode-switch --mode=serial
 ```
-
 ```
 make firmware-connect
 ```
