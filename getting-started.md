@@ -385,6 +385,7 @@ video_matrix connect input1 output0
 video_matrix connect input1 output1
 video_matrix connect input1 encoder
 ```
+
 The following commands are an example to view the video output on monitor 
 ```
 H2U 00:01:28>i0 on
