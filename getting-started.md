@@ -370,8 +370,6 @@ Connect to lm32 softcore to send direct commands to the HDMI2USB such as
 changing resolution:
 ```
 hdmi2usb-mode-switch --mode=serial
-```
-```
 make firmware-connect
 ```
 Set a mode/capture - type 'help' and read instructions.
