@@ -15,6 +15,7 @@ addons:
     - libftdi-dev
     - libreadline-dev
     - libusb-1.0-0-dev
+    - python3-pip
     - python-yaml
     - realpath
     - util-linux
@@ -30,6 +31,12 @@ env:
    # Travis reports incorrect the hosts number of processors, override to 2
    # cores.
    - JOBS=2
+
+before_install:
+ - wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip -O /tmp/ninja.zip
+ - unzip -d ninja-1.8.2 /tmp/ninja.zip
+ - export PATH=$PATH:$PWD/ninja-1.8.2/
+ - pip3 install --user meson
 
 install:
  - export CPUS="$C" && echo "CPUS='$CPUS'"

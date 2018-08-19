@@ -24,6 +24,7 @@ OBJECTS=\
 	encoder.o \
 	etherbone.o \
 	ethernet.o \
+	flash.o \
 	fx2.o \
 	hdmi_in0.o \
 	hdmi_out0.o \
@@ -40,6 +41,7 @@ OBJECTS=\
 	pll.o \
 	processor.o \
 	reboot.o \
+	spiflash.o \
 	stdio_wrap.o \
 	telnet.o \
 	tofe_eeprom.o \
@@ -52,7 +54,7 @@ OBJECTS=\
 
 CFLAGS += \
 	-I$(FIRMWARE_DIRECTORY) \
-	-I$(BUILD_DIRECTORY)/software/firmware
+	-I$(BUILD_DIRECTORY)/software/firmware \
 
 CFLAGS += \
 	-Wall \
@@ -62,6 +64,7 @@ CFLAGS += \
 
 
 include $(UIP_DIRECTORY)/Makefile.mk
+include $(MODEM_DIRECTORY)/Makefile.mk
 
 LDFLAGS += \
 
@@ -87,7 +90,9 @@ firmware.elf: $(FIRMWARE_DIRECTORY)/linker.ld $(OBJECTS)
                 -L../libcompiler_rt \
 		-lcompiler_rt \
 		-L../uip \
-		-luip
+		-luip \
+		-L../modem \
+		-lmodem
 	chmod -x $@
 
 # pull in dependency info for *existing* .o files

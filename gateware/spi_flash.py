@@ -258,4 +258,3 @@ def SpiFlash(pads, *args, **kw):
         return SpiFlashSingle(pads, *args, **kw)
     else:
         return SpiFlashDualQuad(pads, *args, **kw)
-

@@ -12,6 +12,9 @@ endif
 PYTHON ?= python
 export PYTHON
 
+MESON ?= meson
+export MESON
+
 SPLIT_REGEX := ^\([^.]*\)\.\?\(.*\)$$
 
 # The platform to run on. It is made up of FPGA_MAIN_BOARD.EXPANSION_BOARD
@@ -275,7 +278,11 @@ gateware-clean:
 
 # Firmware - the stuff which runs in the soft CPU inside the FPGA.
 # --------------------------------------
-firmware-cmd: litex-submodules
+FIRMWARE_MODULES=libmodem
+firmware-submodules: $(addsuffix /.git,$(addprefix third_party/,$(FIRMWARE_MODULES)))
+	@true
+
+firmware-cmd: litex-submodules firmware-submodules
 	mkdir -p $(TARGET_BUILD_DIR)
 ifneq ($(OS),Windows_NT)
 	$(MAKE_CMD) --no-compile-gateware \

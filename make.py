@@ -123,6 +123,7 @@ def main():
         builder = Builder(soc, **buildargs)
         if not args.no_compile_firmware or args.override_firmware:
             builder.add_software_package("uip", "{}/firmware/uip".format(os.getcwd()))
+            builder.add_software_package("modem", "{}/firmware/modem".format(os.getcwd()))
             builder.add_software_package("firmware", "{}/firmware".format(os.getcwd()))
         vns = builder.build(**dict(args.build_option))
     else:

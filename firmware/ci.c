@@ -31,6 +31,7 @@
 #include "config.h"
 #include "edid.h"
 #include "encoder.h"
+#include "flash.h"
 #include "fx2.h"
 #include "hdmi_in0.h"
 #include "hdmi_in1.h"
@@ -174,11 +175,23 @@ static void help_debug(void)
 #endif
 	wputs("  debug dna                      - show Board's DNA");
 	wputs("  debug edid <port>              - dump monitor EDID");
+#if defined(CSR_SPIFLASH_BASE) && defined(FLASH_BOOT_ADDRESS)
+	wputs("  debug spiflash                 - test bitbang write");
+#endif
 #ifdef CSR_CAS_BASE
 	wputs("  debug cas leds <value>         - change the status LEDs");
 	wputs("  debug cas switches             - read the control switches status");
 	wputs("  debug cas buttons read         - read the control buttons status");
 	wputs("  debug cas buttons clear        - clear any asserted buttons status");
+#endif
+}
+
+static void help_write(void)
+{
+	wputs("write commands");
+#ifdef CSR_SPIFLASH_BASE
+	wputs("  write spi xmodem addr len      - upload new spi flash firmware (xmodem)");
+	wputs("  write spi sfl addr len crc     - upload new spi flash firmware (flterm)");
 #endif
 }
 
@@ -224,6 +237,7 @@ static void ci_help(void)
 	wputs("");
 #endif
 	help_debug();
+	help_write();
 }
 
 static char *readstr(void)
@@ -1004,6 +1018,82 @@ static void debug_ddr(void)
 }
 #endif
 
+#undef NEXT_TOKEN_OR_RETURN
+#define NEXT_TOKEN_OR_RETURN(s, t, reason)				\
+	if(!(t = get_token(&s))) {				\
+		wprintf("Parse failed - " reason " \r\n");	\
+		return;						\
+	}
+
+#ifdef CSR_SPIFLASH_BASE
+static void write_spi(char* str)
+{
+	char *token;
+	int rc = 0;
+	char * endptr;
+	unsigned long addr;
+	unsigned long len;
+	unsigned long crc;
+	int use_xmodem = 0, use_sfl = 0;
+	char * proto_str;
+
+	token = get_token(&str);
+
+	if(strcmp(token, "xmodem") == 0) {
+		use_xmodem = 1;
+		proto_str = "xmodem";
+	}
+	else if(strcmp(token, "sfl") == 0) {
+		use_sfl = 1;
+		proto_str = "sfl";
+	}
+	else {
+		wprintf("Protocol not supported.\r\n");
+		return;
+	}
+
+	NEXT_TOKEN_OR_RETURN(str, token, "Invalid address.");
+	addr = strtoul(token, &endptr, 0);
+	if(*endptr != '\0') {
+		wprintf("Invalid chars in address.");
+		return;
+	}
+
+	NEXT_TOKEN_OR_RETURN(str, token, "Invalid length.");
+	len = strtoul(token, &endptr, 0);
+	if(*endptr != '\0') {
+		wprintf("Invalid chars in length.");
+		return;
+	}
+
+	NEXT_TOKEN_OR_RETURN(str, token, "Invalid CRC.");
+	crc = strtoul(token, &endptr, 0);
+	if(*endptr != '\0') {
+		wprintf("Invalid chars in CRC.");
+		return;
+	}
+
+	wprintf("Will use %s with addr %lX, len %ld and crc %lX.\r\n", proto_str, addr, len, crc);
+	if(use_xmodem)
+		rc = write_xmodem(addr, len, crc);
+	else if(use_sfl)
+		rc = write_sfl(addr, len, crc);
+	else
+		rc = -3;
+
+	if(rc == 0)
+		wprintf("New firmware written successfully.\r\n");
+	else if(rc == -1)
+		wprintf("CRC error transmitting firmware.\r\n");
+	else if(rc == -2)
+		wprintf("Flash comparison with in-memory image failed.\r\n");
+	else
+		wprintf("Unspecified error: %d\r\n", rc);
+
+	return;
+}
+#endif
+
 void ci_prompt(void)
 {
 	wprintf("H2U %s>", uptime_str());
@@ -1052,6 +1142,8 @@ void ci_service(void)
 #endif
 		else if(strcmp(token, "debug") == 0)
 			help_debug();
+		else if(strcmp(token, "write") == 0)
+			help_write();
 		else
 			ci_help();
 		wputs("");
@@ -1302,6 +1394,10 @@ void ci_service(void)
 #endif
 			if(found == 0)
 				wprintf("no such port\n");
+#if defined(CSR_SPIFLASH_BASE) && defined(FLASH_BOOT_ADDRESS)
+		} else if(strcmp(token, "spiflash") == 0) {
+				bitbang_test();
+#endif
 #ifdef CSR_CAS_BASE
 		} else if(strcmp(token, "cas") == 0) {
 			token = get_token(&str);
@@ -1331,7 +1427,17 @@ void ci_service(void)
 #endif
 		} else
 			help_debug();
-
+	} else if(strcmp(token, "write") == 0) {
+		token = get_token(&str);
+		if(false) { } // XXX: Replace with "command not supported?" if
+		// CSR_SPIFLASH_BASE isn't defined?
+#ifdef CSR_SPIFLASH_BASE
+		else if((strcmp(token, "spi") == 0) ) {
+			write_spi(str);
+		}
+#endif
+		else
+			help_write();
 	} else if(strcmp(token, "version") == 0) {
 		print_version();
 	} else {
