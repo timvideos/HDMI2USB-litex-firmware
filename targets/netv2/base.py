@@ -1,6 +1,6 @@
 # Support for netv2
-from litex.gen import *
-from litex.gen.genlib.resetsync import AsyncResetSynchronizer
+from migen import *
+from migen.genlib.resetsync import AsyncResetSynchronizer
 
 from litex.soc.integration.soc_core import mem_decoder
 from litex.soc.integration.soc_sdram import *
@@ -94,7 +94,6 @@ class BaseSoC(SoCSDRAM):
         SoCSDRAM.__init__(self, platform, clk_freq,
             integrated_rom_size=0x8000,
             integrated_sram_size=0x8000,
-            ident="NeTV2 LiteX Base SoC",
             **kwargs)
 
         self.submodules.crg = _CRG(platform)
@@ -108,8 +107,8 @@ class BaseSoC(SoCSDRAM):
         sdram_module = MT41J128M16(self.clk_freq, "1:4")
         self.submodules.ddrphy = a7ddrphy.A7DDRPHY(
             platform.request("ddram"))
-        self.add_constant("A7DDRPHY_BITSLIP", 2)
-        self.add_constant("A7DDRPHY_DELAY", 8)
+        self.add_constant("READ_LEVELING_BITSLIP", 2)
+        self.add_constant("READ_LEVELING_DELAY", 8)
         controller_settings = ControllerSettings(
             with_bandwidth=True,
             cmd_buffer_depth=8,

@@ -31,3 +31,6 @@
 [submodule "third_party/libmodem"]
 	path = third_party/libmodem
 	url = https://github.com/cr1901/libmodem
+[submodule "third_party/migen"]
+	path = third_party/migen
+	url = https://github.com/m-labs/migen.git

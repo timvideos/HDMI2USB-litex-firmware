@@ -240,7 +240,7 @@ this step.
 
 Load the gateware and firmware - see [1] if using a VM:
 ```
-make load-gateware
+make gateware-load
 ```
 
 On the Opsis, while loading the Blue LED (D1 / Done) and Green LED (D2) will
@@ -313,13 +313,63 @@ to switch to serial mode and then back to the jtag mode like this;
 hdmi2usb-mode-switch --mode=serial
 hdmi2usb-mode-switch --mode=jtag
 ```
+Load the firmware
+```
+make firmware-load
+
+```
+If you see no output, press ‘Enter’ a few times. You can then kick off the firmware loading process again:
+```
+BIOS> serialboot
+Booting from serial...
+Press Q or ESC to abort boot completely.
+sL5DdSMmkekro
+[FLTERM] Received firmware download request from the device.
+[FLTERM] Uploading kernel (86484 bytes)...
+[FLTERM] Upload complete (10.6KB/s).
+[FLTERM] Booting the device.
+[FLTERM] Done.
+Executing booted program at 0x40000000
+HDMI2USB firmware booting...
+
+opsis_eeprom: Init...finished.
+
+hardware version info
+===============================================
+           DNA: 0137be87d98719f0
+           MAC: d8:80:39:57:04:94
+
+gateware version info
+===============================================
+      platform: opsis
+        target: video
+      revision: 5f07955beabcf9cebe0e896c4e51242075566cb6
+
+firmware version info
+===============================================
+      platform: opsis
+        target: video
+    git commit: 5f07955beabcf9cebe0e896c4e51242075566cb6
+    git branch: master
+  git describe: v0.0.4-203-g5f07955
+    git status:
+    --
+    ?? ../../../../HDMI2USB-mode-switch/
+    --
+
+         built: May 31 2018 10:43:25
+        uptime: 00:00:00
+-----------------------------------------------
+MDIO mode: 1000Mbps / link: down
+
+```
 
 ## 5) Testing
 
 Connect to lm32 softcore to send direct commands to the HDMI2USB such as
 changing resolution:
 ```
-make connect-lm32
+make firmware-connect
 ```
 Set a mode/capture - type 'help' and read instructions.
 
@@ -336,6 +386,21 @@ video_matrix connect input1 output1
 video_matrix connect input1 encoder
 ```
 
+The following commands are an example to view the video output on monitor 
+```
+H2U 00:01:28>i0 on
+Enabling input0
+H2U 00:02:24>i1 on
+Enabling input1
+H2U 00:02:26>o0 on
+Enabling output0
+H2U 00:02:30>o1 on
+Enabling output
+H2U 00:04:20>x c pattern output0 # You should see the pattern on the monitor
+Connecting pattern to output0
+H2U 00:04:48>x c input0 output0 #  You should see your desktop on the monior
+Connecting input0 to output0
+```
 View the video output on your computer with your preferred tool.
 
 The scripts/view-hdmi2usb.sh script will try and find a suitable tool to display.

@@ -1,8 +1,8 @@
 import os
 
-from litex.gen import *
-from litex.gen.genlib.cdc import MultiReg
-from litex.gen.genlib.misc import chooser
+from migen import *
+from migen.genlib.cdc import MultiReg
+from migen.genlib.misc import chooser
 
 from litex.soc.interconnect import wishbone
 from litex.soc.interconnect import stream
@@ -29,7 +29,7 @@ class EncoderDMAReader(Module, AutoCSR):
         burst_pixels = dram_port.dw//pixel_bits
         alignment_bits = bits_for(dram_port.dw//8) - 1
 
-        self.comb += dma.source.connect(source) # XXX add Converter
+        self.comb += dma.source.connect(source)
 
         base = Signal(32)
         h_width = self.h_width.storage

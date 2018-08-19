@@ -19,12 +19,6 @@ if [ $SOURCED = 1 ]; then
 	return
 fi
 
-if [ ! -z "$HDMI2USB_ENV" ]; then
-	echo "You appear to have sourced the HDMI2USB settings, these are incompatible with setting up."
-	echo "Please exit this terminal and run again from a clean shell."
-	exit 1
-fi
-
 if [ ! -z "$SETTINGS_FILE" -o ! -z "$XILINX" ]; then
 	echo "You appear to have sourced the Xilinx ISE settings, these are incompatible with setting up."
 	echo "Please exit this terminal and run again from a clean shell."
@@ -69,7 +63,8 @@ if [ ! -z "$XILINX_PASSPHRASE" ]; then
 	echo $XILINX_PASSPHRASE >> $XILINX_PASSPHRASE_FILE
 
 	# Need gpg to do the unencryption
-	XILINX_DIR=$BUILD_DIR/Xilinx
+	export XILINX_DIR=$BUILD_DIR/Xilinx
+	export LIKELY_XILINX_LICENSE_DIR=$XILINX_DIR
 	if [ ! -d "$XILINX_DIR" -o ! -d "$XILINX_DIR/opt" ]; then
 		(
 			cd $BUILD_DIR
@@ -93,6 +88,10 @@ if [ ! -z "$XILINX_PASSPHRASE" ]; then
 			mkdir -p $XILINX_DIR/opt/Xilinx/Vivado/2017.3/scripts/rt/data/svlog/sdbs
 			mkdir -p $XILINX_DIR/opt/Xilinx/Vivado/2017.3/tps/lnx64/jre
 
+			# Make ISE stop complaining about missing wbtc binary
+			mkdir -p $XILINX_DIR/opt/Xilinx/14.7/ISE_DS/ISE/bin/lin64
+			ln -s /bin/true $XILINX_DIR/opt/Xilinx/14.7/ISE_DS/ISE/bin/lin64/wbtc
+
 			# Relocate ISE from /opt to $XILINX_DIR
 			for i in $(grep -l -Rsn "/opt/Xilinx" $XILINX_DIR/opt)
 			do
@@ -106,20 +105,76 @@ if [ ! -z "$XILINX_PASSPHRASE" ]; then
 			#make
 		)
 	fi
-	export MISOC_EXTRA_CMDLINE="-Ob toolchain_path $XILINX_DIR/opt/Xilinx/"
-	# Reserved MAC address from documentation block, see
-	# http://www.iana.org/assignments/ethernet-numbers/ethernet-numbers.xhtml
-	export XILINXD_LICENSE_FILE=$XILINX_DIR
-	export MACADDR=90:10:00:00:00:01
-	#export LD_PRELOAD=$XILINX_DIR/impersonate_macaddress/impersonate_macaddress.so
-	#ls -l $LD_PRELOAD
-
 	rm $XILINX_PASSPHRASE_FILE
 	trap - EXIT
-elif [ -z "$XILINX_DIR" ]; then
-	XILINX_DIR=/
 fi
+if [ -z "$LIKELY_XILINX_LICENSE_DIR" ]; then
+	LIKELY_XILINX_LICENSE_DIR="$HOME/.Xilinx"
+fi
+
+XILINX_SETTINGS_ISE='/opt/Xilinx/*/ISE_DS/settings64.sh'
+XILINX_SETTINGS_VIVADO='/opt/Xilinx/Vivado/*/settings64.sh'
+
+if [ -z "$XILINX_DIR" ]; then
+	LOCAL_XILINX_DIR=$BUILD_DIR/Xilinx
+	if [ -d "$LOCAL_XILINX_DIR/opt/Xilinx/" ]; then
+		# Reserved MAC address from documentation block, see
+		# http://www.iana.org/assignments/ethernet-numbers/ethernet-numbers.xhtml
+		export LIKELY_XILINX_LICENSE_DIR=$LOCAL_XILINX_DIR
+		export MACADDR=90:10:00:00:00:01
+		#export LD_PRELOAD=$XILINX_DIR/impersonate_macaddress/impersonate_macaddress.so
+		#ls -l $LD_PRELOAD
+		export XILINX_DIR=$LOCAL_XILINX_DIR
+		export XILINX_LOCAL_USER_DATA=no
+	fi
+fi
+if [ -z "$LIKELY_XILINX_LICENSE_DIR" ]; then
+	LIKELY_XILINX_LICENSE_DIR="$HOME/.Xilinx"
+fi
+shopt -s nullglob
+XILINX_SETTINGS_ISE=($XILINX_DIR/$XILINX_SETTINGS_ISE)
+XILINX_SETTINGS_VIVADO=($XILINX_DIR/$XILINX_SETTINGS_VIVADO)
+shopt -u nullglob
+
 echo "        Xilinx directory is: $XILINX_DIR/opt/Xilinx/"
+if [ ${#XILINX_SETTINGS_ISE[@]} -gt 0 ]; then
+	echo -n "                             - Xilinx ISE toolchain found!"
+	if [ ${#XILINX_SETTINGS_ISE[@]} -gt 1 ]; then
+		echo -n " (${#XILINX_SETTINGS_ISE[@]} versions)"
+	fi
+	echo ""
+	export HAVE_XILINX_ISE=1
+else
+	export HAVE_XILINX_ISE=0
+fi
+if [ ${#XILINX_SETTINGS_VIVADO[@]} -gt 0 ]; then
+	echo -n "                             - Xilinx Vivado toolchain found!"
+	if [ ${#XILINX_SETTINGS_VIVADO[@]} -gt 1 ]; then
+		echo -n " (${#XILINX_SETTINGS_VIVADO[@]} versions)"
+	fi
+	echo ""
+	export HAVE_XILINX_VIVADO=1
+else
+	export HAVE_XILINX_VIVADO=0
+fi
+if [ $HAVE_XILINX_ISE -eq 1 -o $HAVE_XILINX_VIVADO -eq 1 ]; then
+	export HAVE_XILINX_TOOLCHAIN=1
+else
+	export HAVE_XILINX_TOOLCHAIN=0
+fi
+if [ $HAVE_XILINX_TOOLCHAIN -eq 1 ]; then
+	export MISOC_EXTRA_CMDLINE="-Ob toolchain_path $XILINX_DIR/opt/Xilinx/"
+fi
+
+# Detect a likely lack of license early, but just warn if it's missing
+# just in case they've set it up elsewhere.
+if [ ! -e $LIKELY_XILINX_LICENSE_DIR/Xilinx.lic ]; then
+	echo "(WARNING) Please ensure you have installed Xilinx and have a license."
+	echo "(WARNING) Copy your Xilinx license to Xilinx.lic in $LIKELY_XILINX_LICENSE_DIR to suppress this warning."
+else
+	echo "          Xilinx license in: $LIKELY_XILINX_LICENSE_DIR"
+	export XILINXD_LICENSE_FILE=$LIKELY_XILINX_LICENSE_DIR
+fi
 
 function check_exists {
 	TOOL=$1
@@ -173,6 +228,17 @@ function check_import_version {
 	fi
 }
 
+function fix_conda {
+	for py in $(find $CONDA_DIR -name envs_manager.py); do
+		START_SUM=$(sha256sum $py | sed -e's/ .*//')
+		sed -i -e"s^expand(join('~', '.conda', 'environments.txt'))^join('$CONDA_DIR', 'environments.txt')^" $py
+		END_SUM=$(sha256sum $py | sed -e's/ .*//')
+		if [ $START_SUM != $END_SUM ]; then
+			sed -i -e"s/$START_SUM/$END_SUM/" $(find $CONDA_DIR -name paths.json)
+		fi
+	done
+}
+
 echo ""
 echo "Initializing environment"
 echo "---------------------------------"
@@ -190,68 +256,88 @@ export PATH=$CONDA_DIR/bin:$PATH:/sbin
 		# -b to enable batch mode (no prompts)
 		# -f to not return an error if the location specified by -p already exists
 		./Miniconda3-latest-Linux-x86_64.sh -p $CONDA_DIR -b -f
-		conda config --set always_yes yes --set changeps1 no
+		fix_conda
+		conda config --system --set always_yes yes
+		conda config --system --set changeps1 no
+		conda config --system --add envs_dirs $CONDA_DIR/envs
+		conda config --system --add pkgs_dirs $CONDA_DIR/pkgs
 		conda update -q conda
 	fi
-	conda config --add channels timvideos
+	fix_conda
+	conda config --system --add channels timvideos
+	conda info
 )
+
+eval $(cd $TOP_DIR; export HDMI2USB_ENV=1; make env || return 1) || exit 1
+(
+	cd $TOP_DIR
+	export HDMI2USB_ENV=1
+	make info || return 1
+	echo
+) || exit 1
+
+echo "python ==3.6" > $CONDA_DIR/conda-meta/pinned # Make sure it stays at version 3.6
 
 # Check the Python version
 echo
-echo "Installing python3.5"
-conda install python=3.5
-check_version python 3.5
-echo "python ==3.5.4" > $CONDA_DIR/conda-meta/pinned # Make sure it stays at version 3.5
+echo "Installing python3.6"
+conda install -y $CONDA_FLAGS python=3.6
+fix_conda
+check_version python 3.6
 
 echo ""
 echo "Installing binaries into environment"
 echo "---------------------------------"
 
 # fxload
-echo
-echo "Installing fxload (tool for Cypress FX2)"
-# conda install fxload
-check_exists fxload
+if [ "$PLATFORM" == "opsis" -o "$PLATFORM" == "atlys" ]; then
+	echo
+	echo "Installing fxload (tool for Cypress FX2)"
+	# conda install fxload
+	check_exists fxload
+fi
 
 # FIXME: Remove this once @jimmo has finished his new firmware
 # MimasV2Config.py
-MIMASV2CONFIG=$BUILD_DIR/conda/bin/MimasV2Config.py
-echo
-echo "Installing MimasV2Config.py (mimasv2 flashing tool)"
-if [ ! -e $MIMASV2CONFIG ]; then
-	wget https://raw.githubusercontent.com/numato/samplecode/master/FPGA/MimasV2/tools/configuration/python/MimasV2Config.py -O $MIMASV2CONFIG
-	chmod a+x $MIMASV2CONFIG
+if [ "$PLATFORM" == "mimasv2" ]; then
+	MIMASV2CONFIG=$BUILD_DIR/conda/bin/MimasV2Config.py
+	echo
+	echo "Installing MimasV2Config.py (mimasv2 flashing tool)"
+	if [ ! -e $MIMASV2CONFIG ]; then
+		wget https://raw.githubusercontent.com/numato/samplecode/master/FPGA/MimasV2/tools/configuration/python/MimasV2Config.py -O $MIMASV2CONFIG
+		chmod a+x $MIMASV2CONFIG
+	fi
+	check_exists MimasV2Config.py
 fi
-check_exists MimasV2Config.py
 
 # flterm
 echo
 echo "Installing flterm (serial terminal tool)"
-conda install flterm
+conda install -y $CONDA_FLAGS flterm
 check_exists flterm
 
 # binutils for the target
 echo
 echo "Installing binutils for ${CPU} (assembler, linker, and other tools)"
-conda install binutils-${CPU}-elf=$BINUTILS_VERSION
+conda install -y $CONDA_FLAGS binutils-${CPU}-elf=$BINUTILS_VERSION
 check_version ${CPU}-elf-ld $BINUTILS_VERSION
 
 # gcc for the target
 echo
 echo "Installing gcc for ${CPU} ('bare metal' C cross compiler)"
-conda install gcc-${CPU}-elf-nostdc=$GCC_VERSION
+conda install -y $CONDA_FLAGS gcc-${CPU}-elf-nostdc=$GCC_VERSION
 check_version ${CPU}-elf-gcc $GCC_VERSION
 
 # gdb for the target
 #echo
 #echo "Installing gdb for ${CPU} (debugger)"
-#conda install gdb-${CPU}-elf=$GDB_VERSION
+#conda install -y $CONDA_FLAGS gdb-${CPU}-elf=$GDB_VERSION
 #check_version ${CPU}-elf-gdb $GDB_VERSION
 
 # openocd for programming via Cypress FX2
 echo
 echo "Installing openocd (jtag tool for programming and debug)"
-conda install openocd=$OPENOCD_VERSION
+conda install -y $CONDA_FLAGS openocd=$OPENOCD_VERSION
 check_version openocd $OPENOCD_VERSION
 
 echo ""
@@ -260,13 +346,13 @@ echo "---------------------------------------"
 # pyserial for communicating via uarts
 echo
 echo "Installing pyserial (python module)"
-conda install pyserial
+conda install -y $CONDA_FLAGS pyserial
 check_import serial
 
 # ipython for interactive debugging
 echo
 echo "Installing ipython (python module)"
-conda install ipython
+conda install -y $CONDA_FLAGS ipython
 check_import IPython
 
 # progressbar2 for progress bars
@@ -293,7 +379,18 @@ echo "Installing HDMI2USB-mode-switch (flashing and config tool)"
 pip install --upgrade git+https://github.com/timvideos/HDMI2USB-mode-switch.git
 check_import_version hdmi2usb.modeswitch $HDMI2USB_MODESWITCH_VERSION
 
-# git submodules
+# git commands
+echo ""
+echo "Updating git config"
+echo "-----------------------"
+(
+	git config status.submodulesummary 1
+	git config push.recurseSubmodules check
+	git config diff.submodule log
+	git config checkout.recurseSubmodules 1
+	git config alias.sdiff '!'"git diff && git submodule foreach 'git diff'"
+	git config alias.spush 'push --recurse-submodules=on-demand'
+)
 echo ""
 echo "Updating git submodules"
 echo "-----------------------"
@@ -302,7 +399,7 @@ echo "-----------------------"
 	git submodule update --recursive --init
 	git submodule foreach \
 		git submodule update --recursive --init
-	git status
+	git submodule status --recursive
 )
 
 # lite

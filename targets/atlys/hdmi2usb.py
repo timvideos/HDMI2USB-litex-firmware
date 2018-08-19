@@ -1,4 +1,4 @@
-from litex.gen.fhdl.decorators import ClockDomainsRenamer
+from migen.fhdl.decorators import ClockDomainsRenamer
 from litex.soc.integration.soc_core import mem_decoder
 from litex.soc.interconnect import stream
 
@@ -23,7 +23,7 @@ class HDMI2USBSoC(BaseSoC):
     def __init__(self, platform, *args, **kwargs):
         BaseSoC.__init__(self, platform, *args, **kwargs)
 
-        encoder_port = self.sdram.crossbar.get_port()
+        encoder_port = self.sdram.crossbar.get_port(mode="read", dw=128, reverse=True)
         self.submodules.encoder_reader = EncoderDMAReader(encoder_port)
         encoder_cdc = stream.AsyncFIFO([("data", 128)], 4)
         encoder_cdc = ClockDomainsRenamer({"write": "sys",

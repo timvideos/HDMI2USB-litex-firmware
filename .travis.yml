@@ -7,6 +7,7 @@ compiler:
 sudo: false
 addons:
   apt:
+    update: true
     packages:
     - build-essential
     - fxload
@@ -26,6 +27,10 @@ env:
   global:
    - HDMI2USB_UDEV_IGNORE=1
    - CLEAN_CHECK=1
+   - PREBUILT_DIR="/tmp/HDMI2USB-firmware-prebuilt"
+   # Travis reports incorrect the hosts number of processors, override to 2
+   # cores.
+   - JOBS=2
 
 before_install:
  - wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip -O /tmp/ninja.zip
@@ -34,13 +39,17 @@ before_install:
  - pip3 install --user meson
 
 install:
- - export CPU="$C"
- - export PLATFORMS="$P"
- - export TARGETS="$T"
+ - export CPUS="$C" && echo "CPUS='$CPUS'"
+ - export PLATFORMS="$P" && echo "PLATFORMS='$PLATFORMS'"
+ - export TARGETS="$T" && echo "TARGETS='$TARGETS'"
+ - export FIRMWARE="$F" && echo "FIRMWARE='$FIRMWARE'"
  - $PWD/.travis/setup.sh
 
 script:
  - $PWD/.travis/build.sh
+
+after_success:
+ - $PWD/.travis/update-prebuilt-list.sh
 
 notifications:
  email:
@@ -85,6 +94,24 @@ jobs:
   - stage: Targets - Base
     env: C=lm32 P=pipistrello  T="base"
 
+  - stage: Targets - Base
+    env: C=lm32 P=saturn       T="base"
+
+  - stage: Targets - Base
+    env: C=lm32 P=galatea      T="base"
+
+  - stage: Targets - Base
+    env: C=lm32 P=neso         T="base"
+
+  - stage: Targets - Base
+    env: C=lm32 P=waxwing      T="base"
+
+  - stage: Targets - Base
+    env: C=lm32 P=basys3       T="base"
+
+  - stage: Targets - Base
+    env: C=lm32 P=cmod_a7      T="base"
+
   # or1k base targets
   - stage: Targets - Base
     env: C=or1k P=arty         T="base net"
@@ -101,14 +128,19 @@ jobs:
   - stage: Targets - Base
     env: C=or1k P=pipistrello  T="base"
 
+  # Linux Targets
+  #--------------------------------------------
+  - stage: Targets - Base
+    env: C=or1k.linux F=linux P=arty        T="net"
+
   #--------------------------------------------
   # Video Targets
   #--------------------------------------------
   - stage: Targets - Video
     env: C=lm32 P=atlys        T="video"
 
-  - stage: Targets - Video
-    env: C=lm32 P=netv2        T="video"
+  #- stage: Targets - Video
+  #  env: C=lm32 P=netv2        T="video"
 
   - stage: Targets - Video
     env: C=lm32 P=nexys_video  T="video"

@@ -2,7 +2,7 @@ from litevideo.input import HDMIIn
 from litevideo.output import VideoOut
 
 from targets.utils import csr_map_update
-from targets.atlys.net import NetSoC as BaseSoC
+from targets.atlys.base import BaseSoC
 
 
 class VideoSoC(BaseSoC):
@@ -70,6 +70,9 @@ NET "{pix1_clk}" TNM_NET = "GRPpix1_clk";
             self.crg.cd_sys.clk,
             self.hdmi_out0.driver.clocking.cd_pix.clk,
             self.hdmi_out1.driver.clocking.cd_pix.clk)
+
+        for name, value in sorted(self.platform.hdmi_infos.items()):
+            self.add_constant(name, value)
 
 
 SoC = VideoSoC

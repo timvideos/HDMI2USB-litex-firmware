@@ -1,6 +1,6 @@
-from litex.gen import *
-from litex.gen.genlib.resetsync import AsyncResetSynchronizer
-from litex.gen.fhdl.specials import Keep
+from migen import *
+from migen.genlib.resetsync import AsyncResetSynchronizer
+from migen.fhdl.specials import Keep
 
 from litex.soc.integration.soc_core import mem_decoder
 from litex.soc.integration.soc_sdram import *
@@ -113,7 +113,6 @@ class BaseSoC(SoCSDRAM):
         SoCSDRAM.__init__(self, platform, clk_freq,
             integrated_rom_size=0x8000,
             integrated_sram_size=0x8000,
-            ident="NeTV2 LiteX Base SoC",
             with_uart=False,
             **kwargs)
 
@@ -126,8 +125,8 @@ class BaseSoC(SoCSDRAM):
 
         # sdram
         self.submodules.ddrphy = a7ddrphy.A7DDRPHY(platform.request("ddram"))
-        self.add_constant("A7DDRPHY_BITSLIP", 2)
-        self.add_constant("A7DDRPHY_DELAY", 8)
+        self.add_constant("READ_LEVELING_BITSLIP", 2)
+        self.add_constant("READ_LEVELING_DELAY", 8)
         sdram_module = MT41J128M16(self.clk_freq, "1:4")
         self.register_sdram(self.ddrphy,
                             sdram_module.geom_settings,

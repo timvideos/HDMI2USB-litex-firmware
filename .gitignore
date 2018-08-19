@@ -2,9 +2,12 @@ __pycache__
 *.pyc
 *.egg-info
 *.vcd
+firmware/hdmi_in[1-9].[ch]
 outgoing
 build
 *~
 *.png
 third_party/qemu-litex
 third_party/micropython
+third_party/linux
+third_party/litex-devicetree
