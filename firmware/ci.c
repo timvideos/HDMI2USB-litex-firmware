@@ -49,7 +49,7 @@
 #include "tofe_eeprom.h"
 #include "uptime.h"
 #include "version.h"
-
+#include "crop.h"
 #include "ci.h"
 
 int status_enabled;
@@ -97,16 +97,35 @@ static void help_heartbeat(void)
 	wputs("  heartbeat <on/off>             - Turn on/off heartbeat feature");
 }
 
+static void help_crop(void)
+{
+        wputs("change crop status (alias: 'cr')");
+        wputs("  crop <on/off>             - Turn on/off crop feature");
+}
+
 static void heartbeat_enable(void)
 {
 	hb_status(true);
 	wprintf("Heartbeat enabled\n");
 }
 
+static void crop_enable(void)
+{
+	crop_status(true);
+	wprintf("crop enable\n");
+}
+
 static void heartbeat_disable(void)
 {
 	hb_status(false);
 	wprintf("Heartbeat disabled\n");
+}
+
+static void crop_disable(void)
+{
+
+       	crop_status(false);
+        wprintf("crop disabled\n");
 }
 
 #ifdef CSR_HDMI_OUT0_BASE
@@ -203,6 +222,9 @@ static void ci_help(void)
 	wputs("");
 	help_hdp_toggle();
 	wputs("");
+        help_crop();
+        wputs("");
+
 #ifdef CSR_HDMI_OUT0_BASE
 	help_output0();
 	wputs("");
@@ -1135,6 +1157,15 @@ void ci_service(void)
 		token = get_token(&str);
 		hdp_toggle(atoi(token));
 	}
+        else if((strcmp(token, "crop") == 0) || (strcmp(token, "cr") == 0)) {
+                token = get_token(&str);
+                if((strcmp(token, "on") == 0) )
+                        crop_enable();
+                else if((strcmp(token, "off") == 0) )
+                        crop_disable();
+                else
+                        help_crop();
+        }
 #ifdef CSR_HDMI_OUT0_BASE
 	else if((strcmp(token, "output0") == 0) || (strcmp(token, "o0") == 0)) {
 		token = get_token(&str);
