@@ -53,6 +53,47 @@ if [ ! -d $BUILD_DIR ]; then
 	mkdir -p $BUILD_DIR
 fi
 
+# Figure out the cpu architecture
+if [ -z "$CPU" ]; then
+	export CPU=vexriscv
+fi
+if [ "$CPU" = "lm32" ]; then
+	export CPU_ARCH=lm32
+elif [ "$CPU" = "mor1kx" ]; then
+	export CPU_ARCH=or1k
+elif [ "$CPU" = "vexriscv" -o "$CPU" = "picorv32" -o "$CPU" = "minerva" ]; then
+	export CPU_ARCH=riscv32
+elif [ "$CPU" = "none" ]; then
+	export CPU_ARCH=$(gcc -dumpmachine)
+else
+	echo
+	echo "Unknown CPU value '$CPU'. Valid values are;"
+	echo " * CPU='lm32'      - LatticeMico"
+	echo " * CPU='mor1kx'    - OpenRISC"
+	echo " * CPU='vexriscv'  - RISC-V"
+	echo " * CPU='picorv32'  - RISC-V"
+	echo " * CPU='minerva'   - RISC-V"
+	echo " * CPU='none'      - None or host CPU in use"
+	exit 1
+fi
+if [ -z "${CPU_ARCH}" ]; then
+	echo "Internal error, no CPU_ARCH value found."
+	exit 1
+fi
+
+# Figure out the PLATFORM value
+PLATFORMS=$(ls targets/ | grep -v ".py" | grep -v "common" | sed -e"s+targets/++")
+if [ -z "$PLATFORM" -o ! -e targets/$PLATFORM ]; then
+	echo
+	echo "Unknown platform '$PLATFORM'"
+	echo
+	echo "Valid platforms are:"
+	for PLATFORM in $PLATFORMS; do
+		echo " * $PLATFORM"
+	done
+	exit 1
+fi
+
 function check_exists {
 	TOOL=$1
 	if which $TOOL >/dev/null; then
@@ -144,6 +185,18 @@ EOF
 	done
 }
 
+function pin_conda_package {
+	CONDA_PACKAGE_NAME=$1
+	CONDA_PACKAGE_VERSION=$2
+	echo "Pinning ${CONDA_PACKAGE_NAME} to ${CONDA_PACKAGE_VERSION}"
+	CONDA_PIN_FILE=$CONDA_DIR/conda-meta/pinned
+	CONDA_PIN_TMP=$CONDA_DIR/conda-meta/pinned.tmp
+	touch ${CONDA_PIN_FILE}
+	cat ${CONDA_PIN_FILE} | grep -v ${CONDA_PACKAGE_NAME} > ${CONDA_PIN_TMP} || true
+	echo "${CONDA_PACKAGE_NAME} ==${CONDA_PACKAGE_VERSION}" >> ${CONDA_PIN_TMP}
+	cat ${CONDA_PIN_TMP} | sort > ${CONDA_PIN_FILE}
+}
+
 echo ""
 echo "Initializing environment"
 echo "---------------------------------"
@@ -156,6 +209,7 @@ export PATH=$CONDA_DIR/bin:$PATH:/sbin
 		cd $BUILD_DIR
 		# FIXME: Get the miniconda people to add a "self check" mode
 		wget --no-verbose --continue https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+		#wget --continue https://repo.anaconda.com/miniconda/Miniconda3-${CONDA_VERSION}-Linux-x86_64.sh -O Miniconda3-latest-Linux-x86_64.sh
 		chmod a+x Miniconda3-latest-Linux-x86_64.sh
 		# -p to specify the install location
 		# -b to enable batch mode (no prompts)
@@ -169,6 +223,7 @@ export PATH=$CONDA_DIR/bin:$PATH:/sbin
 		conda config --system --set changeps1 no
 		conda config --system --add envs_dirs $CONDA_DIR/envs
 		conda config --system --add pkgs_dirs $CONDA_DIR/pkgs
+		pin_conda_package conda ${CONDA_VERSION}
 		conda update -q conda
 	fi
 	fix_conda
@@ -176,15 +231,15 @@ export PATH=$CONDA_DIR/bin:$PATH:/sbin
 	conda info
 )
 
-eval $(cd $TOP_DIR; export HDMI2USB_ENV=1; make env || return 1) || exit 1
+eval $(cd $TOP_DIR; export HDMI2USB_ENV=1; make env || exit 1) || exit 1
 (
 	cd $TOP_DIR
 	export HDMI2USB_ENV=1
-	make info || return 1
+	make info || exit 1
 	echo
 ) || exit 1
 
-echo "python ==${PYTHON_VERSION}" > $CONDA_DIR/conda-meta/pinned # Make sure it stays at given version
+pin_conda_package python ${PYTHON_VERSION}
 
 # Check the Python version
 echo
@@ -365,11 +420,6 @@ check_version openocd $OPENOCD_VERSION
 echo ""
 echo "Installing C compiler toolchain"
 echo "---------------------------------------"
-if [ "$CPU" = "lm32" -o "$CPU" = "or1k" ]; then
-	CPU_ARCH=$CPU
-elif [ "$CPU" = "vexriscv" -o "$CPU" = "picorv32" -o "$CPU" = "minerva" ]; then
-	CPU_ARCH=riscv32
-fi
 
 # binutils for the target
 echo
@@ -468,6 +518,18 @@ if [ "$FIRMWARE" = "zephyr" ]; then
 	conda install -y $CONDA_FLAGS pyyaml
 	check_import yaml
 
+	# gperf for Zephyr SDK
+	echo
+	echo "Installing gperf"
+	conda install -y $CONDA_FLAGS gperf
+	check_exists gperf
+
+	# ninja for Zephyr SDK
+	echo
+	echo "Installing ninja"
+	conda install -y $CONDA_FLAGS ninja
+	check_exists ninja
+
 	# elftools for Zephyr SDK
 	echo
 	echo "Installing elftools (python module)"
@@ -476,15 +538,21 @@ if [ "$FIRMWARE" = "zephyr" ]; then
 
 	# west tool for building Zephyr
 	echo
-	echo "Installing west (pyhton module)"
+	echo "Installing west (python module)"
 	pip install west
 	check_import west
 
 	# pykwalify for building Zephyr
 	echo
-	echo "Installing pykwalify (pyhton module)"
+	echo "Installing pykwalify (python module)"
 	pip install pykwalify
 	check_import pykwalify.core
+
+	# cmake for building Zephyr
+	echo
+	echo "Installing cmake (python module)"
+	pip install "cmake==$CMAKE_VERSION"
+	check_version cmake $CMAKE_VERSION
 fi
 
 # git commands
@@ -492,6 +560,7 @@ echo ""
 echo "Updating git config"
 echo "-----------------------"
 (
+	cd $TOP_DIR
 	git config status.submodulesummary 1
 	git config push.recurseSubmodules check
 	git config diff.submodule log
@@ -504,6 +573,7 @@ echo "Updating git submodules"
 echo "-----------------------"
 (
 	cd $TOP_DIR
+	git submodule sync --recursive
 	git submodule update --recursive --init
 	git submodule foreach \
 		git submodule update --recursive --init

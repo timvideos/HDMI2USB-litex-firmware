@@ -94,20 +94,25 @@ FULL_CPU = $(CPU).$(CPU_VARIANT)
 MAKE_LITEX_EXTRA_CMDLINE += --cpu-variant=$(CPU_VARIANT)
 endif
 
+ifeq ($(CPU_ARCH),)
+    $(error "Internal error: CPU_ARCH not set.")
+endif
 ifeq ($(CPU),lm32)
-CPU_ARCH=lm32
 CPU_ENDIANNESS=big
 endif
-ifeq ($(CPU),or1k)
-CPU_ARCH=or1k
+ifeq ($(CPU),mor1kx)
 CPU_ENDIANNESS=big
 endif
 ifeq ($(CPU),vexriscv)
-CPU_ARCH=riscv32
 CPU_ENDIANNESS=little
 endif
 ifeq ($(CPU),picorv32)
-CPU_ARCH=riscv32
+CPU_ENDIANNESS=little
+endif
+ifeq ($(CPU),minerva)
+CPU_ENDIANNESS=little
+endif
+ifeq ($(CPU),none)
 CPU_ENDIANNESS=little
 endif
 
@@ -306,9 +311,9 @@ $(FIRMWARE_FILEBASE).bin: firmware-cmd
 
 $(FIRMWARE_FILEBASE).fbi: $(FIRMWARE_FILEBASE).bin
 ifeq ($(CPU_ENDIANNESS), little)
-	$(PYTHON) -m litex.soc.tools.mkmscimg -f --little $< -o $@
+	$(PYTHON) -m litex.soc.software.mkmscimg -f --little $< -o $@
 else
-	$(PYTHON) -m litex.soc.tools.mkmscimg -f $< -o $@
+	$(PYTHON) -m litex.soc.software.mkmscimg -f $< -o $@
 endif
 
 firmware: $(FIRMWARE_FILEBASE).bin
@@ -465,6 +470,7 @@ info:
 	@if [ x"$(FIRMWARE)" != x"firmware" ]; then \
 		echo "               Firmare: $(FIRMWARE) (default: firmware)"; \
 	fi
+	@echo "          Architecture: $(CPU_ARCH)"
 
 prompt:
 	@echo -n "P=$(FULL_PLATFORM)"
@@ -504,7 +510,7 @@ help:
 	@echo "                        (current: $(TARGET), default: $(DEFAULT_TARGET))"
 	@echo ""
 	@echo " CPU describes which soft-CPU to use on the FPGA."
-	@echo " CPU=lm32 OR or1k OR picorv32 OR vexriscv"
+	@echo " CPU=lm32 OR mor1kx OR picorv32 OR vexriscv"
 	@echo "                        (current: $(CPU), default: $(DEFAULT_CPU))"
 	@echo ""
 	@echo " CPU_VARIANT describes which soft-CPU variant to use on the FPGA."
