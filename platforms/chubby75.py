@@ -61,6 +61,20 @@ _io = [
         IOStandard("LVCMOS33"), Misc("SLEW=FAST")
     ),
 
+    ("spiflash", 0,
+        Subsignal("cs_n", Pins("T3")),
+        Subsignal("clk", Pins("R11")),
+        Subsignal("mosi", Pins("T10")),
+        Subsignal("miso", Pins("P10"), Misc("PULLUP")),
+        IOStandard("LVCMOS33"), Misc("SLEW=FAST")
+    ),
+
+    ("spiflash2x", 0,
+        Subsignal("cs_n", Pins("T3"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("R11"), IOStandard("LVCMOS33")),
+        Subsignal("dq", Pins("T10", "P10"), IOStandard("LVCMOS33")),
+    ),
+
     # Direction pin for buffers U600 to U607. 1 is input, 0 is output.
     ("bufdir", 0, Pins("F13"), IOStandard("LVCMOS33")),
 ]

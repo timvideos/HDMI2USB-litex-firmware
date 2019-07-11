@@ -6,6 +6,7 @@ from fractions import Fraction
 from migen import *
 from migen.genlib.resetsync import AsyncResetSynchronizer
 
+from litex.soc.integration.soc_core import mem_decoder
 from litex.soc.integration.soc_sdram import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.clock import period_ns
@@ -15,6 +16,13 @@ from litedram.modules import _SpeedgradeTimings
 from litedram.modules import SDRAMModule
 from litedram.phy import GENSDRPHY
 from litedram.core.controller import ControllerSettings
+
+from liteeth.common import *
+from liteeth.phy.s6rgmii import LiteEthPHYRGMII
+from liteeth.core import LiteEthUDPIPCore
+from liteeth.frontend.etherbone import LiteEthEtherbone
+
+from gateware import spi_flash
 
 #import platform
 
@@ -89,9 +97,19 @@ class M12L64322A(SDRAMModule):
 
 
 class BaseSoC(SoCSDRAM):
-    def __init__(self, platform, **kwargs):
-        if 'integrated_rom_size' not in kwargs:
-            kwargs['integrated_rom_size']=0x8000
+    csr_map = {
+        "ethphy":  11,
+        "ethcore": 12,
+        "spiflash": 13
+    }
+    csr_map.update(SoCSDRAM.csr_map)
+
+    mem_map = {
+        "spiflash": 0x20000000,  # (default shadow @0xa0000000)
+    }
+    mem_map.update(SoCSDRAM.mem_map)
+
+    def __init__(self, platform, eth_phy=0, mac_address=0x10e2d5000000, ip_address="192.168.1.50", **kwargs):
         if 'integrated_sram_size' not in kwargs:
             kwargs['integrated_sram_size']=0x4000
 
@@ -99,7 +117,7 @@ class BaseSoC(SoCSDRAM):
         SoCSDRAM.__init__(self, platform, clk_freq=sys_clk_freq,
             **kwargs)
 
-        self.submodules.crg = _CRG(platform, sys_clk_freq)
+        self.submodules.crg = crg = _CRG(platform, sys_clk_freq)
 
         if not self.integrated_main_ram_size:
             self.submodules.sdrphy = GENSDRPHY(platform.request("sdram"))
@@ -109,6 +127,27 @@ class BaseSoC(SoCSDRAM):
                                 sdram_module.timing_settings,
                                 controller_settings=ControllerSettings(
                                     with_refresh=False))
+
+        # spi flash
+        spiflash = "spiflash2x"
+        spiflash_pads = platform.request(spiflash)
+        self.submodules.spiflash = spi_flash.SpiFlash(
+                spiflash_pads)
+        self.add_constant("SPIFLASH_PAGE_SIZE", 256)
+        self.add_constant("SPIFLASH_SECTOR_SIZE", 0x10000)
+        self.add_wb_slave(mem_decoder(self.mem_map["spiflash"]), self.spiflash.bus)
+        self.add_memory_region(
+"spiflash", self.mem_map["spiflash"] | self.shadow_base, 16*1024*1024)
+        self.register_rom(self.spiflash.bus, 0x1000000)
+
+        # 1gbps ethernet
+        ethphy = LiteEthPHYRGMII(platform.request("eth_clocks", eth_phy),
+                                 platform.request("eth", eth_phy))
+        ethcore = LiteEthUDPIPCore(ethphy, mac_address, convert_ip(ip_address), sys_clk_freq)
+        self.submodules += ethphy, ethcore
+        ethphy.crg.cd_eth_rx.clk.attr.add("keep")
+        platform.add_period_constraint(ethphy.crg.cd_eth_rx.clk, period_ns(125e6))
+        platform.add_false_path_constraints(crg.cd_sys.clk, ethphy.crg.cd_eth_rx.clk)
 
         # led blink
         led_counter = Signal(32)
