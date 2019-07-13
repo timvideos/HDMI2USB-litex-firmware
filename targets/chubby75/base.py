@@ -109,7 +109,7 @@ class BaseSoC(SoCSDRAM):
     }
     mem_map.update(SoCSDRAM.mem_map)
 
-    def __init__(self, platform, eth_phy=0, mac_address=0x10e2d5000000, ip_address="192.168.1.50", **kwargs):
+    def __init__(self, platform, eth_phy=0, mac_address=0x10e2d5000000, ip_address="192.168.1.50", cpu_reset_address=0x80000, **kwargs):
         if 'integrated_sram_size' not in kwargs:
             kwargs['integrated_sram_size']=0x4000
 
@@ -129,16 +129,20 @@ class BaseSoC(SoCSDRAM):
                                     with_refresh=False))
 
         # spi flash
-        spiflash = "spiflash2x"
-        spiflash_pads = platform.request(spiflash)
         self.submodules.spiflash = spi_flash.SpiFlash(
-                spiflash_pads)
-        self.add_constant("SPIFLASH_PAGE_SIZE", 256)
-        self.add_constant("SPIFLASH_SECTOR_SIZE", 0x10000)
-        self.add_wb_slave(mem_decoder(self.mem_map["spiflash"]), self.spiflash.bus)
-        self.add_memory_region(
-"spiflash", self.mem_map["spiflash"] | self.shadow_base, 16*1024*1024)
-        self.register_rom(self.spiflash.bus, 0x1000000)
+            platform.request("spiflash2x"),
+            dummy=platform.spiflash_read_dummy_bits,
+            div=platform.spiflash_clock_div)
+        self.add_constant("SPIFLASH_PAGE_SIZE", platform.spiflash_page_size)
+        self.add_constant("SPIFLASH_SECTOR_SIZE", platform.spiflash_sector_size)
+        self.flash_boot_address = self.mem_map["spiflash"]+platform.gateware_size
+        self.register_mem("spiflash", self.mem_map["spiflash"],
+                            self.spiflash.bus, size=platform.spiflash_total_size)
+
+        self.register_rom(self.spiflash.bus, platform.spiflash_total_size-cpu_reset_address)
+#        self.flash_boot_address = 0x1000000+platform.gateware_size
+#        self.add_memory_region("rom", kwargs['cpu_reset_address'], bios_size)
+#        self.add_constant("ROM_DISABLE", 1)
 
         # 1gbps ethernet
         ethphy = LiteEthPHYRGMII(platform.request("eth_clocks", eth_phy),

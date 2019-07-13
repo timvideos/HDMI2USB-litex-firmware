@@ -288,5 +288,14 @@ class Platform(XilinxPlatform):
     default_clk_name = "clk25"
     default_clk_period = 40.00
 
+    gateware_size = 0x80000
+
+    spiflash_model = "25q32jvsiq"
+    spiflash_page_size = 256
+    spiflash_read_dummy_bits = 4 #?
+    spiflash_clock_div = 4 #?
+    spiflash_sector_size = 0x1000 #4k
+    spiflash_total_size = int((32/8)*1024*1024) # 32Mbit
+
     def __init__(self):
         XilinxPlatform.__init__(self, "xc6slx16-2-ftg256", _io, _connectors)
