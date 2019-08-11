@@ -109,7 +109,10 @@ class BaseSoC(SoCSDRAM):
     }
     mem_map.update(SoCSDRAM.mem_map)
 
-    def __init__(self, platform, eth_phy=0, mac_address=0x10e2d5000000, ip_address="192.168.1.50", cpu_reset_address=0x80000, **kwargs):
+    def __init__(self, platform, eth_phy=0, mac_address=0x10e2d5000000, ip_address="192.168.1.50", **kwargs):
+        if 'integrated_rom_size' not in kwargs:
+            kwargs['integrated_rom_size']=None
+            kwargs['cpu_reset_address']=self.mem_map["spiflash"]+platform.gateware_size
         if 'integrated_sram_size' not in kwargs:
             kwargs['integrated_sram_size']=0x4000
 
@@ -139,19 +142,22 @@ class BaseSoC(SoCSDRAM):
         self.register_mem("spiflash", self.mem_map["spiflash"],
                             self.spiflash.bus, size=platform.spiflash_total_size)
 
-        self.register_rom(self.spiflash.bus, platform.spiflash_total_size-cpu_reset_address)
+        bios_size = 0xa000
+        self.add_memory_region("rom", kwargs['cpu_reset_address'], bios_size)
+
+#        self.register_rom(self.spiflash.bus, platform.spiflash_total_size-cpu_reset_address)
 #        self.flash_boot_address = 0x1000000+platform.gateware_size
 #        self.add_memory_region("rom", kwargs['cpu_reset_address'], bios_size)
 #        self.add_constant("ROM_DISABLE", 1)
 
         # 1gbps ethernet
-        ethphy = LiteEthPHYRGMII(platform.request("eth_clocks", eth_phy),
-                                 platform.request("eth", eth_phy))
-        ethcore = LiteEthUDPIPCore(ethphy, mac_address, convert_ip(ip_address), sys_clk_freq)
-        self.submodules += ethphy, ethcore
-        ethphy.crg.cd_eth_rx.clk.attr.add("keep")
-        platform.add_period_constraint(ethphy.crg.cd_eth_rx.clk, period_ns(125e6))
-        platform.add_false_path_constraints(crg.cd_sys.clk, ethphy.crg.cd_eth_rx.clk)
+#        ethphy = LiteEthPHYRGMII(platform.request("eth_clocks", eth_phy),
+#                                 platform.request("eth", eth_phy))
+#        ethcore = LiteEthUDPIPCore(ethphy, mac_address, convert_ip(ip_address), sys_clk_freq)
+#        self.submodules += ethphy, ethcore
+#        ethphy.crg.cd_eth_rx.clk.attr.add("keep")
+#        platform.add_period_constraint(ethphy.crg.cd_eth_rx.clk, period_ns(125e6))
+#        platform.add_false_path_constraints(crg.cd_sys.clk, ethphy.crg.cd_eth_rx.clk)
 
         # led blink
         led_counter = Signal(32)
