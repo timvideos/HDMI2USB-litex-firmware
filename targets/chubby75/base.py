@@ -145,19 +145,14 @@ class BaseSoC(SoCSDRAM):
         bios_size = 0xa000
         self.add_memory_region("rom", kwargs['cpu_reset_address'], bios_size)
 
-#        self.register_rom(self.spiflash.bus, platform.spiflash_total_size-cpu_reset_address)
-#        self.flash_boot_address = 0x1000000+platform.gateware_size
-#        self.add_memory_region("rom", kwargs['cpu_reset_address'], bios_size)
-#        self.add_constant("ROM_DISABLE", 1)
-
         # 1gbps ethernet
-#        ethphy = LiteEthPHYRGMII(platform.request("eth_clocks", eth_phy),
-#                                 platform.request("eth", eth_phy))
-#        ethcore = LiteEthUDPIPCore(ethphy, mac_address, convert_ip(ip_address), sys_clk_freq)
-#        self.submodules += ethphy, ethcore
-#        ethphy.crg.cd_eth_rx.clk.attr.add("keep")
-#        platform.add_period_constraint(ethphy.crg.cd_eth_rx.clk, period_ns(125e6))
-#        platform.add_false_path_constraints(crg.cd_sys.clk, ethphy.crg.cd_eth_rx.clk)
+        ethphy = LiteEthPHYRGMII(platform.request("eth_clocks", eth_phy),
+                                 platform.request("eth", eth_phy))
+        ethcore = LiteEthUDPIPCore(ethphy, mac_address, convert_ip(ip_address), sys_clk_freq)
+        self.submodules += ethphy, ethcore
+        ethphy.crg.cd_eth_rx.clk.attr.add("keep")
+        platform.add_period_constraint(ethphy.crg.cd_eth_rx.clk, period_ns(125e6))
+        platform.add_false_path_constraints(crg.cd_sys.clk, ethphy.crg.cd_eth_rx.clk)
 
         # led blink
         led_counter = Signal(32)
