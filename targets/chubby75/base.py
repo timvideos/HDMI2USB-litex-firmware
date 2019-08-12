@@ -144,6 +144,7 @@ class BaseSoC(SoCSDRAM):
 
         bios_size = 0xa000
         self.add_memory_region("rom", kwargs['cpu_reset_address'], bios_size)
+        self.flash_boot_address = self.mem_map["spiflash"]+platform.gateware_size+bios_size
 
         # 1gbps ethernet
         ethphy = LiteEthPHYRGMII(platform.request("eth_clocks", eth_phy),
