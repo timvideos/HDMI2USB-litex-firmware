@@ -1,0 +1,521 @@
+{
+  "OPSIS": {
+    "I2C": {
+      "MUX": {
+        "SEL": 0
+      },
+      "MASTER": {
+        "W": 0,
+        "R": 0
+      },
+      "FX2": {
+        "RESET": {
+          "OUT": 0
+        },
+        "HACK": {
+          "SLAVE": {
+            "ADDR": 0
+          },
+          "STATUS": 0,
+          "SHIFT": {
+            "REG": 0
+          }
+        }
+      }
+    }
+  },
+  "SPIFLASH": {
+    "MISO": 0,
+    "BITBANG": 0
+  },
+  "ENCODER": {
+    "READER": {
+      "BASE": 0,
+      "DONE": 0,
+      "H": {
+        "WIDTH": 0
+      },
+      "V": {
+        "WIDTH": 0
+      },
+      "START": 0
+    }
+  },
+  "SDRAM": {
+    "CONTROLLER": {
+      "BANDWIDTH": {
+        "DATA": {
+          "WIDTH": 0
+        },
+        "UPDATE": 0,
+        "NWRITES": 0,
+        "NREADS": 0
+      }
+    },
+    "DFII": {
+      "PI": [
+        {
+          "COMMAND": 0,
+          "WRDATA": 0,
+          "RDDATA": 0,
+          "ADDRESS": 0,
+          "BADDRESS": 0
+        },
+        {
+          "COMMAND": 0,
+          "WRDATA": 0,
+          "RDDATA": 0,
+          "ADDRESS": 0,
+          "BADDRESS": 0
+        },
+        {
+          "COMMAND": 0,
+          "WRDATA": 0,
+          "RDDATA": 0,
+          "ADDRESS": 0,
+          "BADDRESS": 0
+        },
+        {
+          "COMMAND": 0,
+          "WRDATA": 0,
+          "RDDATA": 0,
+          "ADDRESS": 0,
+          "BADDRESS": 0
+        }
+      ],
+      "CONTROL": 0
+    }
+  },
+  "UART": {
+    "TXFULL": 0,
+    "RXTX": 0,
+    "EV": {
+      "STATUS": 0,
+      "PENDING": 0,
+      "ENABLE": 0
+    },
+    "RXEMPTY": 0
+  },
+  "FRONT": {
+    "PANEL": {
+      "LEDS": {
+        "OUT": 0
+      },
+      "SWITCHES": {
+        "IN": 0
+      }
+    }
+  },
+  "ETHPHY": {
+    "MDIO": {
+      "W": 0,
+      "R": 0
+    }
+  },
+  "TIMER": [
+    {
+      "VALUE": 0,
+      "RELOAD": 0,
+      "LOAD": 0,
+      "UPDATE": {
+        "VALUE": 0
+      },
+      "EV": {
+        "STATUS": 0,
+        "PENDING": 0,
+        "ENABLE": 0
+      }
+    }
+  ],
+  "INFO": {
+    "PLATFORM": {
+      "PLATFORM": 0,
+      "TARGET": 0
+    },
+    "DNA": {
+      "ID": 0
+    },
+    "GIT": {
+      "COMMIT": 0
+    }
+  },
+  "ETHMAC": {
+    "SRAM": {
+      "READER": {
+        "SLOT": 0,
+        "LEVEL": 0,
+        "READY": 0,
+        "EV": {
+          "STATUS": 0,
+          "PENDING": 0,
+          "ENABLE": 0
+        },
+        "LENGTH": 0,
+        "START": 0
+      },
+      "WRITER": {
+        "SLOT": 0,
+        "EV": {
+          "STATUS": 0,
+          "PENDING": 0,
+          "ENABLE": 0
+        },
+        "ERRORS": 0,
+        "LENGTH": 0
+      }
+    },
+    "PREAMBLE": {
+      "ERRORS": 0,
+      "CRC": 0
+    },
+    "CRC": {
+      "ERRORS": 0
+    }
+  },
+  "CTRL": {
+    "SCRATCH": 0,
+    "BUS": {
+      "ERRORS": 0
+    }
+  },
+  "HDMI": {
+    "IN": [
+      {
+        "FREQ": {
+          "VALUE": 0
+        },
+        "CHANSYNC": {
+          "CHANNELS": {
+            "SYNCED": 0
+          }
+        },
+        "DATA": [
+          {
+            "CAP": {
+              "DLY": {
+                "CTL": 0,
+                "BUSY": 0
+              },
+              "PHASE": 0
+            },
+            "WER": {
+              "VALUE": 0,
+              "UPDATE": 0
+            },
+            "CHARSYNC": {
+              "CTL": {
+                "POS": 0
+              },
+              "CHAR": {
+                "SYNCED": 0
+              }
+            }
+          },
+          {
+            "CAP": {
+              "DLY": {
+                "CTL": 0,
+                "BUSY": 0
+              },
+              "PHASE": 0
+            },
+            "WER": {
+              "VALUE": 0,
+              "UPDATE": 0
+            },
+            "CHARSYNC": {
+              "CTL": {
+                "POS": 0
+              },
+              "CHAR": {
+                "SYNCED": 0
+              }
+            }
+          },
+          {
+            "CAP": {
+              "DLY": {
+                "CTL": 0,
+                "BUSY": 0
+              },
+              "PHASE": 0
+            },
+            "WER": {
+              "VALUE": 0,
+              "UPDATE": 0
+            },
+            "CHARSYNC": {
+              "CTL": {
+                "POS": 0
+              },
+              "CHAR": {
+                "SYNCED": 0
+              }
+            }
+          }
+        ],
+        "EDID": {
+          "HPD": {
+            "NOTIF": 0
+          }
+        },
+        "RESDETECTION": {
+          "HRES": 0,
+          "VRES": 0
+        },
+        "DMA": {
+          "EV": {
+            "STATUS": 0,
+            "PENDING": 0,
+            "ENABLE": 0
+          },
+          "FRAME": {
+            "SIZE": 0
+          },
+          "SLOT": [
+            {
+              "STATUS": 0,
+              "ADDRESS": 0
+            },
+            {
+              "STATUS": 0,
+              "ADDRESS": 0
+            }
+          ]
+        },
+        "CLOCKING": {
+          "LOCKED": 0,
+          "PLL": {
+            "DRDY": 0,
+            "DAT": {
+              "R": 0,
+              "W": 0
+            },
+            "ADR": 0,
+            "WRITE": 0,
+            "READ": 0
+          }
+        },
+        "FRAME": {
+          "OVERFLOW": 0
+        }
+      },
+      {
+        "FREQ": {
+          "VALUE": 0
+        },
+        "CHANSYNC": {
+          "CHANNELS": {
+            "SYNCED": 0
+          }
+        },
+        "DATA": [
+          {
+            "CAP": {
+              "DLY": {
+                "CTL": 0,
+                "BUSY": 0
+              },
+              "PHASE": 0
+            },
+            "WER": {
+              "VALUE": 0,
+              "UPDATE": 0
+            },
+            "CHARSYNC": {
+              "CTL": {
+                "POS": 0
+              },
+              "CHAR": {
+                "SYNCED": 0
+              }
+            }
+          },
+          {
+            "CAP": {
+              "DLY": {
+                "CTL": 0,
+                "BUSY": 0
+              },
+              "PHASE": 0
+            },
+            "WER": {
+              "VALUE": 0,
+              "UPDATE": 0
+            },
+            "CHARSYNC": {
+              "CTL": {
+                "POS": 0
+              },
+              "CHAR": {
+                "SYNCED": 0
+              }
+            }
+          },
+          {
+            "CAP": {
+              "DLY": {
+                "CTL": 0,
+                "BUSY": 0
+              },
+              "PHASE": 0
+            },
+            "WER": {
+              "VALUE": 0,
+              "UPDATE": 0
+            },
+            "CHARSYNC": {
+              "CTL": {
+                "POS": 0
+              },
+              "CHAR": {
+                "SYNCED": 0
+              }
+            }
+          }
+        ],
+        "EDID": {
+          "HPD": {
+            "NOTIF": 0
+          }
+        },
+        "RESDETECTION": {
+          "HRES": 0,
+          "VRES": 0
+        },
+        "DMA": {
+          "EV": {
+            "STATUS": 0,
+            "PENDING": 0,
+            "ENABLE": 0
+          },
+          "FRAME": {
+            "SIZE": 0
+          },
+          "SLOT": [
+            {
+              "STATUS": 0,
+              "ADDRESS": 0
+            },
+            {
+              "STATUS": 0,
+              "ADDRESS": 0
+            }
+          ]
+        },
+        "CLOCKING": {
+          "LOCKED": 0,
+          "PLL": {
+            "DRDY": 0,
+            "DAT": {
+              "R": 0,
+              "W": 0
+            },
+            "ADR": 0,
+            "WRITE": 0,
+            "READ": 0
+          }
+        },
+        "FRAME": {
+          "OVERFLOW": 0
+        }
+      }
+    ],
+    "OUT": [
+      {
+        "DRIVER": {
+          "CLOCKING": {
+            "CMD": {
+              "DATA": 0
+            },
+            "STATUS": 0,
+            "SEND": {
+              "CMD": {
+                "DATA": 0
+              },
+              "GO": 0
+            },
+            "PLL": {
+              "DRDY": 0,
+              "DAT": {
+                "R": 0,
+                "W": 0
+              },
+              "ADR": 0,
+              "WRITE": 0,
+              "READ": 0
+            }
+          }
+        },
+        "I2C": {
+          "W": 0,
+          "R": 0
+        },
+        "CORE": {
+          "DMA": {
+            "DELAY": {
+              "BASE": 0
+            }
+          },
+          "UNDERFLOW": {
+            "COUNTER": 0,
+            "UPDATE": 0,
+            "ENABLE": 0
+          },
+          "INITIATOR": {
+            "BASE": 0,
+            "HSYNC": {
+              "END": 0,
+              "START": 0
+            },
+            "HRES": 0,
+            "HSCAN": 0,
+            "VSYNC": {
+              "END": 0,
+              "START": 0
+            },
+            "LENGTH": 0,
+            "VSCAN": 0,
+            "ENABLE": 0,
+            "VRES": 0
+          }
+        }
+      },
+      {
+        "I2C": {
+          "W": 0,
+          "R": 0
+        },
+        "CORE": {
+          "DMA": {
+            "DELAY": {
+              "BASE": 0
+            }
+          },
+          "UNDERFLOW": {
+            "COUNTER": 0,
+            "UPDATE": 0,
+            "ENABLE": 0
+          },
+          "INITIATOR": {
+            "BASE": 0,
+            "HSYNC": {
+              "END": 0,
+              "START": 0
+            },
+            "HRES": 0,
+            "HSCAN": 0,
+            "VSYNC": {
+              "END": 0,
+              "START": 0
+            },
+            "LENGTH": 0,
+            "VSCAN": 0,
+            "ENABLE": 0,
+            "VRES": 0
+          }
+        }
+      }
+    ]
+  }
+}
