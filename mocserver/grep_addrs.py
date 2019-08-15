@@ -96,6 +96,19 @@ def crawl(d):
         # append all the values to the foo list
         d[k].append(v)
 
+def flatten(o, path=[]):
+
+    if hasattr(o,'keys'):
+        for k in o:
+            flatten(o[k], path+[k])
+    elif type(o)==list:
+        for i,o in enumerate(o):
+            pathx = path[:-1] + [path[-1]+str(i)]
+            flatten(o, pathx)
+    else:
+        # we are on a leaf
+        name = '_'.join(path)
+        print("{}: {}".format(name, o))
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -104,6 +117,8 @@ def get_args():
 
     parser.add_argument('--regex',
         default=r"^#define (?P<name>[\w_]+)_ADDR 0x(?P<addr>[0-9a-f]*)L")
+    parser.add_argument('--target',
+            default="json")
     return parser.parse_args()
 
 def main():
@@ -118,8 +133,11 @@ def main():
 
     o=o['CSR']
     # o=o['HDMI']
-    j = json.dumps(o, indent=2)
-    print(j)
+    if args.target == "json":
+        j = json.dumps(o, indent=2)
+        print(j)
+    elif args.target == "flat":
+        flatten(o)
 
 
 if __name__ == '__main__':
