@@ -16,15 +16,26 @@ def grep_file(filename, regex):
     names=[]
     with open(filename) as f:
         for line in f:
-            # print(line)
             try:
                 names.append( def_re.match(line).groupdict())
             except AttributeError as e:
-                # print(e)
                 # AttributeError: 'NoneType' object has no attribute 'group'
+                # print(e)
                 pass
 
+    # Do we need the address?
+
     names = [n['name'].split('_') for n in names]
+
+    """
+These don't map to the k:k:k:v pattern, so remove the 2nd.
+#define CSR_HDMI_IN1_DATA2_CAP_PHASE_ADDR 0xe000d088L
+#define CSR_HDMI_IN1_DATA2_CAP_PHASE_RESET_ADDR 0xe000d08cL
+
+#define CSR_SPIFLASH_BITBANG_ADDR 0xe0005000L
+#define CSR_SPIFLASH_BITBANG_EN_ADDR 0xe0005008L
+"""
+    names = [n for n in names if n[-1] not in ['RESET', 'ISSUE', 'EN'] ]
 
     return names
 
@@ -39,34 +50,36 @@ def test_lines():
             ['a', 'e', ],
         ]
 
-
-def set_path(d, path, value):
-    for key in path[:-1]:
-        d = d[key]
-    d[path[-1]] = value
-
-def make_dict():
-    return collections.defaultdict(make_dict);
-
 def mk_obj(lines):
+
+    def make_dict():
+        return collections.defaultdict(make_dict);
+
     the_dict = make_dict()
+
+    def set_path(d, path, value):
+        for key in path[:-1]:
+            d = d[key]
+        d[path[-1]] = value
+
     for line in lines:
-        if line[-1] in ['RESET', 'ISSUE', 'EN']:
-            continue
         set_path(the_dict, line, 0)
 
     return the_dict
 
 def crawl(d):
 
-    # are we on a leaf?
-    if type(d)==int: return
+    # normalize
+    # look for in1:v in2:v and change to in:[v,v]
 
+    # are we on a leaf?
+    if not hasattr(d,'keys'): return
 
     # look for fooN keys
     keys=[]
     for k in d:
         crawl(d[k])
+        if k in ['FX2']: continue # special cases: fx2 is not a 0,1,2
         if k[-1].isdigit():
             keys.append(k)
 
@@ -101,12 +114,11 @@ def main():
 
     o = mk_obj(lines)
 
-    hdmi=o['CSR']['HDMI']
-    # hdmi = o
+    crawl(o)
 
-    crawl(hdmi)
-
-    j = json.dumps(hdmi, indent=2)
+    o=o['CSR']
+    # o=o['HDMI']
+    j = json.dumps(o, indent=2)
     print(j)
 
 
