@@ -4,6 +4,7 @@
 
 import argparse
 import collections
+import csv
 import json
 import re
 
@@ -39,6 +40,21 @@ These don't map to the k:k:k:v pattern, so remove the 2nd.
 
     return names
 
+def remove_comments(data):
+    for line in data:
+        if not line.lstrip().startswith('#'):
+            yield line
+
+def get_csv(csvfile):
+    parse_csv(list(csv.reader(remove_comments(csvfile))))
+
+def parse_csv(data):
+
+    names = []
+    for _type, _name, _address, _, __ in data:
+
+    names = [n['name'].split('_') for n in names]
+    names = [n for n in names if n[-1] not in ['RESET', 'ISSUE', 'EN'] ]
 
 def test_lines():
 
@@ -113,7 +129,8 @@ def flatten(o, path=[]):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--file',
-            default="build/opsis_hdmi2usb_lm32/software/include/generated/csr.h")
+                default="build/opsis_hdmi2usb_lm32/test/csr.csv")
+            # default="build/opsis_hdmi2usb_lm32/software/include/generated/csr.h")
 
     parser.add_argument('--regex',
         default=r"^#define (?P<name>[\w_]+)_ADDR 0x(?P<addr>[0-9a-f]*)L")
