@@ -145,7 +145,8 @@ TARGET_BUILD_DIR = build/$(FULL_PLATFORM)_$(TARGET)_$(FULL_CPU)/
 
 GATEWARE_FILEBASE = $(TARGET_BUILD_DIR)/gateware/top
 BIOS_FILE = $(TARGET_BUILD_DIR)/software/bios/bios.bin
-FIRMWARE_FILEBASE = $(TARGET_BUILD_DIR)/software/$(FIRMWARE)/firmware
+FIRMWARE_DIR = $(TARGET_BUILD_DIR)/software/$(FIRMWARE)
+FIRMWARE_FILEBASE = $(FIRMWARE_DIR)/firmware
 IMAGE_FILE = $(TARGET_BUILD_DIR)/image-gateware+bios+$(FIRMWARE).bin
 
 TFTP_IPRANGE ?= 192.168.100
@@ -241,7 +242,7 @@ image-flash-py: image
 # This is indicated by a "git submodule status" that does not start with
 # a space (" ").
 #
-LITEX_SUBMODULES=migen litex litedram liteeth litepcie litesata litescope liteusb litevideo
+LITEX_SUBMODULES=migen litex litedram liteeth litepcie litesata litescope litevideo
 litex-submodules: $(addsuffix /.git,$(addprefix third_party/,$(LITEX_SUBMODULES)))
 	@if git submodule status --recursive | grep "^[^ ]" >/dev/null; then \
 		echo ""; \
@@ -381,8 +382,18 @@ IN_TFTPD:=/usr/sbin/in.tftpd
 endif
 
 tftp: $(FIRMWARE_FILEBASE).bin
+	rm -rf $(TFTPD_DIR)
 	mkdir -p $(TFTPD_DIR)
+ifeq ($(FIRMWARE),linux)
+	cp $(FIRMWARE_FILEBASE).bin $(TFTPD_DIR)/Image
+	cp $(FIRMWARE_DIR)/$(CPU_ARCH)-rootfs.cpio $(TFTPD_DIR)/rootfs.cpio
+ifeq ($(CPU),vexriscv)
+	cp $(FIRMWARE_DIR)/rv32.dtb $(TFTPD_DIR)
+	cp $(TARGET_BUILD_DIR)/emulator/emulator.bin $(TFTPD_DIR)
+endif
+else
 	cp $(FIRMWARE_FILEBASE).bin $(TFTPD_DIR)/boot.bin
+endif
 
 tftpd_stop:
 	# FIXME: This is dangerous...

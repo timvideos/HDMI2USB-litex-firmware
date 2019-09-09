@@ -82,8 +82,8 @@ if [ -z "${CPU_ARCH}" ]; then
 fi
 
 # Figure out the PLATFORM value
-PLATFORMS=$(ls targets/ | grep -v ".py" | grep -v "common" | sed -e"s+targets/++")
-if [ -z "$PLATFORM" -o ! -e targets/$PLATFORM ]; then
+PLATFORMS=$(ls ${TOP_DIR}/targets/ | grep -v ".py" | grep -v "common" | sed -e"s+targets/++")
+if [ -z "$PLATFORM" -o ! -e ${TOP_DIR}/targets/$PLATFORM ]; then
 	echo
 	echo "Unknown platform '$PLATFORM'"
 	echo
@@ -219,13 +219,13 @@ export PATH=$CONDA_DIR/bin:$PATH:/sbin
 			./Miniconda3-latest-Linux-x86_64.sh -p $CONDA_DIR -b -f || exit 1
 		)
 		fix_conda
-		conda config --system --set always_yes yes
-		conda config --system --set changeps1 no
 		conda config --system --add envs_dirs $CONDA_DIR/envs
 		conda config --system --add pkgs_dirs $CONDA_DIR/pkgs
-		pin_conda_package conda ${CONDA_VERSION}
-		conda update -q conda
 	fi
+	conda config --system --set always_yes yes
+	conda config --system --set changeps1 no
+	pin_conda_package conda ${CONDA_VERSION}
+	conda update -q conda
 	fix_conda
 	conda config --system --add channels timvideos
 	conda info
@@ -385,7 +385,7 @@ fi
 if [ "$PLATFORM" = "opsis" -o "$PLATFORM" = "atlys" ]; then
 	echo
 	echo "Installing fxload (tool for Cypress FX2)"
-	# conda install fxload
+	conda install fxload
 	check_exists fxload
 fi
 
